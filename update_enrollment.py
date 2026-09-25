@@ -1,4 +1,4 @@
-# PUNJAB SIS - LATEST STUDENT ENROLLMENT / GENDER
+# OKARA SIS - LATEST STUDENT ENROLLMENT / GENDER
 # Simple Windows version
 # Tehsil IDs: Depalpur=23, Okara=89, Renala Khurd=102
 
@@ -26,10 +26,8 @@ from bs4 import BeautifulSoup
 from openpyxl import load_workbook
 
 BASE = "https://sis.pesrp.edu.pk"
-DISTRICTS = {
-    "1":"ATTOCK","2":"BAHAWALNAGAR","3":"BAHAWALPUR","4":"BHAKKAR","5":"CHAKWAL","6":"CHINIOT","7":"D.G. KHAN","8":"FAISALABAD","9":"GUJRANWALA","10":"GUJRAT","11":"HAFIZABAD","12":"JHANG","13":"JHELUM","14":"KASUR","15":"KHANEWAL","16":"KHUSHAB","17":"LAHORE","18":"LAYYAH","19":"LODHRAN","20":"MANDI BAHA UD DIN","21":"MIANWALI","22":"MULTAN","23":"MUZAFFARGARH","24":"NANKANA SAHIB","25":"NAROWAL","26":"OKARA","27":"PAKPATTAN","28":"RAHIMYAR KHAN","29":"RAJANPUR","30":"RAWALPINDI","31":"SAHIWAL","32":"SARGODHA","33":"SHEIKHUPURA","34":"SIALKOT","35":"T.T.SINGH","36":"VEHARI","37":"KOT ADU","38":"MURREE","39":"TALAGANG","40":"WAZIRABAD",
-}
-OKARA_TEHSILS = {
+DISTRICT = "26"
+TEHSILS = {
     "23": "Depalpur",
     "89": "Okara",
     "102": "Renala Khurd",
@@ -123,24 +121,16 @@ def parse_options(data):
     return result
 
 
-def get_tehsils(s, district):
+def get_markazes(s, tehsil):
     data, s = request(
         s,
-        "/user/get_tehsils",
+        "/user/get_markazes",
         {
-            "district": district,
-            "selectedTehsil": "false",
+            "tehsil": tehsil,
+            "selectedMarkaz": "false",
             "all": "All",
         },
     )
-    return parse_options(data), s
-
-
-def get_markazes(s, tehsil, district=""):
-    params = {"tehsil": tehsil, "selectedMarkaz": "false", "all": "All"}
-    if district:
-        params["district"] = district
-    data, s = request(s, "/user/get_markazes", params)
     return parse_options(data), s
 
 
@@ -172,14 +162,14 @@ def get_schools(s, markaz):
     return result, s
 
 
-def get_enrollment(s, district, tehsil, markaz, school):
+def get_enrollment(s, tehsil, markaz, school):
     # THIS IS THE ENROLLMENT/GENDER API.
     # Attendance API is NOT used.
     data, s = request(
         s,
         "/dashboard_revamp/get_gender_summary_pie",
         {
-            "district": district,
+            "district": DISTRICT,
             "tehsil": tehsil,
             "markaz": markaz,
             "school": school,
@@ -363,13 +353,20 @@ def write_excel(path, school_df, school_list_df, errors_df):
 def main():
     print()
     print("=" * 70)
-    print(" PUNJAB - LATEST STUDENT ENROLLMENT / GENDER REPORT")
+    print(" OKARA - LATEST STUDENT ENROLLMENT / GENDER REPORT")
     print("=" * 70)
     print()
-    print("Fetching all Punjab districts from the SIS hierarchy...")
+    print("1  Depalpur")
+    print("2  Okara")
+    print("3  Renala Khurd")
+    print("4  ALL OKARA")
     print()
 
-    selected_districts = list(DISTRICTS.items())
+    # GitHub Actions runs the complete Okara district automatically.
+    choice = "4"
+
+    selected = list(TEHSILS.items())
+
     s = new_session()
 
     rows = []
@@ -378,35 +375,18 @@ def main():
 
     started = datetime.now(ZoneInfo("Asia/Karachi")).strftime("%Y-%m-%d %H:%M:%S")
 
-    for district_id, district_name in selected_districts:
+    for tid, tname in selected:
         print()
-        print("DISTRICT:", district_name, "ID:", district_id)
+        print("TEHSIL:", tname, "ID:", tid)
 
         try:
-            tehsils, s = get_tehsils(s, district_id)
+            marks, s = get_markazes(s, tid)
         except Exception as e:
-            if district_id == "26":
-                tehsils = list(OKARA_TEHSILS.items())
-                print("  Tehsil endpoint unavailable; using known Okara IDs.")
-            else:
-                errors.append(["District", district_name, "", "", str(e)])
-                print("  Could not load Tehsils:", e)
-                continue
+            errors.append(["Tehsil", tname, "", "", str(e)])
+            print("  Could not load Markaz:", e)
+            continue
 
-        print("  Tehsils found:", len(tehsils))
-
-        for tid, tname in tehsils:
-            print()
-            print(" TEHSIL:", tname, "ID:", tid)
-
-            try:
-                marks, s = get_markazes(s, tid, district_id)
-            except Exception as e:
-                errors.append(["Tehsil", district_name + " / " + tname, "", "", str(e)])
-                print("  Could not load Markaz:", e)
-                continue
-
-            print("  Markaz found:", len(marks))
+        print("  Markaz found:", len(marks))
 
         for mi, (mid, mname) in enumerate(marks, 1):
             print(f"  Markaz {mi}/{len(marks)}: {mname}")
@@ -433,19 +413,17 @@ def main():
                 report_markaz_id = "SECONDARY-WING" if w == "Secondary Wing" else mid
 
                 schools_all.append([
-                    district_name, district_id, tname, tid, report_markaz, report_markaz_id,
+                    tname, tid, report_markaz, report_markaz_id,
                     sname, sid, emis, w
                 ])
 
                 try:
                     en, s = get_enrollment(
-                        s, district_id, tid, mid, sid
+                        s, tid, mid, sid
                     )
 
                     rows.append([
                         started,
-                        district_name,
-                        district_id,
                         tname,
                         tid,
                         report_markaz,
@@ -491,8 +469,6 @@ def main():
 
     school_columns = [
         "Run Date",
-        "District",
-        "District ID",
         "Tehsil",
         "Tehsil ID",
         "Markaz",
@@ -513,8 +489,6 @@ def main():
     school_list_df = pd.DataFrame(
         schools_all,
         columns=[
-            "District",
-            "District ID",
             "Tehsil",
             "Tehsil ID",
             "Markaz",
@@ -542,8 +516,8 @@ def main():
     stamp = datetime.now(ZoneInfo("Asia/Karachi")).strftime("%Y-%m-%d_%H%M%S")
     out_dir = Path(__file__).resolve().parent / "data"
     out_dir.mkdir(parents=True, exist_ok=True)
-    final = out_dir / "Punjab_Latest_Enrollment_Gender_Latest.xlsx"
-    archive = out_dir / f"Punjab_Latest_Enrollment_Gender_{stamp}.xlsx"
+    final = out_dir / "Okara_Latest_Enrollment_Gender_Latest.xlsx"
+    archive = out_dir / f"Okara_Latest_Enrollment_Gender_{stamp}.xlsx"
     temp = out_dir / f"creating_{stamp}.xlsx"
 
     try:
