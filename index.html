@@ -159,11 +159,11 @@ function exportPDF(){
  const margin=28,gap=9,cardW=(doc.internal.pageSize.getWidth()-margin*2-gap*5)/6,cardY=82,cardH=58;
  cards.forEach((card,i)=>{
    const x=margin+i*(cardW+gap);
-   doc.setDrawColor(210,218,230);doc.setFillColor(255,255,255);
+   doc.setDrawColor(224,229,236);doc.setFillColor(248,250,252);
    doc.roundedRect(x,cardY,cardW,cardH,7,7,'FD');
    doc.setFont(undefined,'normal');doc.setFontSize(8);doc.setTextColor(95,105,120);
    doc.text(card[0],x+8,cardY+17);
-   doc.setFont(undefined,'bold');doc.setFontSize(15);doc.setTextColor(23,32,51);
+   doc.setFont(undefined,'bold');doc.setFontSize(15);doc.setTextColor(71,85,105);
    doc.text(card[1],x+8,cardY+40);
  });
  doc.setTextColor(23,32,51);
@@ -193,7 +193,7 @@ function exportPDF(){
    body:td.data.map(r=>r.map(v=>typeof v==='number'?fmt(v):String(v))),
    startY:52,
    margin:{left:20,right:20},
-   styles:{fontSize:7,cellPadding:3,overflow:'linebreak',valign:'middle'},columnStyles:{0:{cellWidth:28},1:{cellWidth:125},2:{cellWidth:75},3:{cellWidth:70},4:{cellWidth:65},5:{cellWidth:145},6:{cellWidth:42},7:{cellWidth:55},8:{cellWidth:68},9:{cellWidth:45},10:{cellWidth:45},11:{cellWidth:45},12:{cellWidth:48},13:{cellWidth:48}},
+   styles:{fontSize:7,cellPadding:2.5,overflow:'linebreak',valign:'middle'},columnStyles:{0:{cellWidth:25},1:{cellWidth:68},2:{cellWidth:48},3:{cellWidth:72},4:{cellWidth:48},5:{cellWidth:125},6:{cellWidth:38,overflow:'visible'},7:{cellWidth:60,overflow:'visible'},8:{cellWidth:58},9:{cellWidth:40},10:{cellWidth:40},11:{cellWidth:40},12:{cellWidth:45},13:{cellWidth:45}},
    headStyles:{fontSize:6},
    theme:'grid',
    repeatHeader:true
