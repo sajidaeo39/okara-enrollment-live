@@ -135,6 +135,18 @@ function exportRows(){
  XLSX.utils.book_append_sheet(wb,ws,reportLabel());
  XLSX.writeFile(wb,reportSuffix()+'.xlsx');
 }
+function totalRow(headers, data){
+ const idx=(name)=>headers.findIndex(h=>String(h).toLowerCase()===name.toLowerCase());
+ const row=new Array(headers.length).fill('');
+ const labels=headers.map(h=>String(h).toLowerCase());
+ if(labels.includes('school')) row[labels.indexOf('school')]='TOTAL';
+ else if(labels.includes('markaz')) row[labels.indexOf('markaz')]='TOTAL';
+ else if(labels.includes('tehsil')) row[labels.indexOf('tehsil')]='TOTAL';
+ else row[0]='TOTAL';
+ data.forEach(r=>r.forEach((v,i)=>{if(typeof v==='number') row[i]=(row[i]||0)+v;}));
+ return row;
+}
+
 function exportPDF(){
  const td=tableData(),list=filtered();
  const a=list.reduce((z,r)=>{z.schools++;z.male+=r.male;z.female+=r.female;z.total+=r.total;z.maleTarget+=r.maleTarget;z.femaleTarget+=r.femaleTarget;z.totalTarget+=r.totalTarget;return z;},{schools:0,male:0,female:0,total:0,maleTarget:0,femaleTarget:0,totalTarget:0});
@@ -149,13 +161,13 @@ function exportPDF(){
  let startY=145;
  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(23,52,95);doc.text(reportLabel()+' Report',28,startY);
  startY+=10;
- doc.autoTable({head:[td.headers],body:td.data.map(r=>r.map(v=>typeof v==='number'?fmt(v):String(v))),startY:startY,theme:'grid',
+ const pdfBody=td.data.map(r=>r.map(v=>typeof v==='number'?fmt(v):String(v))); pdfBody.push(totalRow(td.headers,td.data).map(v=>typeof v==='number'?fmt(v):String(v)));\n doc.autoTable({head:[td.headers],body:pdfBody,startY:startY,theme:'grid',
  styles:{font:'helvetica',fontSize:12,cellPadding:{top:5,right:4,bottom:5,left:4},overflow:'linebreak',valign:'middle',halign:'center',lineColor:[210,220,232],lineWidth:.35},
- headStyles:{fontSize:12,fontStyle:'bold',fillColor:[230,238,247],textColor:[23,52,95],halign:'center',valign:'middle',cellPadding:5},
- bodyStyles:{fontSize:12,minCellHeight:24,halign:'center',valign:'middle'},
+ headStyles:{fontSize:12,fontStyle:'bold',fillColor:[214,229,244],textColor:[23,52,95],halign:'center',valign:'middle',cellPadding:6},
+ bodyStyles:{fontSize:12,minCellHeight:28,halign:'center',valign:'middle'},
  columnStyles:{0:{cellWidth:105},1:{cellWidth:58},2:{cellWidth:48},3:{cellWidth:62},4:{cellWidth:45}},
  margin:{left:28,right:28,top:10,bottom:24},
- didParseCell:function(data){if(data.section==='body' && data.column.index===0){data.cell.styles.halign='left';}}
+ didParseCell:function(data){if(data.section==='body' && data.column.index===0){data.cell.styles.halign='left';} if(data.section==='body' && data.row.index===pdfBody.length-1){data.cell.styles.fontStyle='bold';data.cell.styles.fillColor=[226,240,230];data.cell.styles.textColor=[23,52,95];}}
  });
  doc.save(reportSuffix()+'.pdf');
 }
