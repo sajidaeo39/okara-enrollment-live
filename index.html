@@ -140,50 +140,59 @@ function exportPDF(){
  const f=filtered();
  const totalSchools=f.length;
  const boys=f.reduce((a,r)=>a+r.male,0), girls=f.reduce((a,r)=>a+r.female,0), total=f.reduce((a,r)=>a+r.total,0);
- const boysTarget=f.reduce((a,r)=>a+r.maleTarget,0), girlsTarget=f.reduce((a,r)=>a+r.femaleTarget,0), totalTarget=f.reduce((a,r)=>a+r.totalTarget,0);
- const achievement=totalTarget?(total/totalTarget*100):0;
+ const boysTarget=f.reduce((a,r)=>a+r.maleTarget,0), girlsTarget=f.reduce((a,r)=>a+r.femaleTarget,0);
+ const remainingBoys=boys-boysTarget, remainingGirls=girls-girlsTarget, remainingTotal=total-(boysTarget+girlsTarget);
+ const achievement=(boysTarget+girlsTarget)?(total/(boysTarget+girlsTarget)*100):0;
  const labels={school:'School Wise',markaz:'Markaz Wise',tehsil:'Tehsil Wise',wing:'Wing Wise',lowSchools:'Low Performing Schools'};
  const title='Okara Enrollment Dashboard - '+(labels[currentView]||'Report');
 
- // PAGE 1 — Summary
- doc.setFontSize(18);doc.setFont(undefined,'bold');doc.text(title,28,34);
- doc.setFontSize(10);doc.setFont(undefined,'normal');
- doc.text('Latest Report: '+(reportDateTime||reportDate||'N/A'),28,52);
+ // PAGE 1 — original-style 6 summary cards
+ doc.setFont(undefined,'bold');doc.setFontSize(18);doc.text(title,28,34);
+ doc.setFont(undefined,'normal');doc.setFontSize(9);doc.text('Latest Report: '+(reportDateTime||reportDate||'N/A'),28,50);
  doc.text('Filters: Tehsil = '+(document.getElementById('tehsilFilter').value||'All')+
           ' | Wing = '+(document.getElementById('wingFilter').value||'All')+
-          ' | Search = '+(document.getElementById('search').value.trim()||'All'),28,68);
+          ' | Search = '+(document.getElementById('search').value.trim()||'All'),28,65);
 
- const summaryRows=[
-  ['Schools',fmt(totalSchools),'Boys Enrollment',fmt(boys),'Girls Enrollment',fmt(girls),'Total Enrollment',fmt(total)],
-  ['Target Boys',fmt(boysTarget),'Target Girls',fmt(girlsTarget),'Total Target',fmt(totalTarget),'Achievement',achievement.toFixed(1)+'%'],
-  ['Remaining Boys',fmt(boys-boysTarget),'Remaining Girls',fmt(girls-girlsTarget),'Remaining Total',fmt(total-totalTarget),'Report Rows',fmt(td.data.length)]
+ const cards=[
+   ['Schools',fmt(totalSchools)],
+   ['Boys Enrollment',fmt(boys)],
+   ['Target Boys',fmt(boysTarget)],
+   ['Girls Enrollment',fmt(girls)],
+   ['Target Girls',fmt(girlsTarget)],
+   ['Remaining Total',fmt(remainingTotal)]
  ];
- doc.autoTable({
-   body:summaryRows,
-   startY:88,
-   theme:'grid',
-   styles:{fontSize:10,cellPadding:8,halign:'center',valign:'middle'},
-   columnStyles:{0:{fontStyle:'bold'},2:{fontStyle:'bold'},4:{fontStyle:'bold'},6:{fontStyle:'bold'}}
+ const margin=28,gap=9,cardW=(doc.internal.pageSize.getWidth()-margin*2-gap*5)/6,cardY=82,cardH=58;
+ cards.forEach((card,i)=>{
+   const x=margin+i*(cardW+gap);
+   doc.setDrawColor(210,218,230);doc.setFillColor(255,255,255);
+   doc.roundedRect(x,cardY,cardW,cardH,7,7,'FD');
+   doc.setFont(undefined,'normal');doc.setFontSize(8);doc.setTextColor(95,105,120);
+   doc.text(card[0],x+8,cardY+17);
+   doc.setFont(undefined,'bold');doc.setFontSize(15);doc.setTextColor(23,32,51);
+   doc.text(card[1],x+8,cardY+40);
  });
+ doc.setTextColor(23,32,51);
 
- let sy=doc.lastAutoTable.finalY+28;
- doc.setFontSize(12);doc.setFont(undefined,'bold');doc.text('Report Summary',28,sy);
- doc.setFontSize(9);doc.setFont(undefined,'normal');
- const summaryText=[
-   'Report: '+(labels[currentView]||'Report'),
-   'Schools included after filters: '+fmt(totalSchools),
-   'Boys: '+fmt(boys)+' | Girls: '+fmt(girls)+' | Total Enrollment: '+fmt(total),
-   'Target: Boys '+fmt(boysTarget)+' | Girls '+fmt(girlsTarget)+' | Total '+fmt(totalTarget),
-   'Remaining vs Target: Boys '+fmt(boys-boysTarget)+' | Girls '+fmt(girls-girlsTarget)+' | Total '+fmt(total-totalTarget),
-   'Achievement: '+achievement.toFixed(1)+'%',
-   'Generated from the latest automatically fetched SIS report.'
+ let sy=cardY+cardH+25;
+ doc.setFont(undefined,'bold');doc.setFontSize(12);doc.text('Report Summary',28,sy);
+ doc.setFont(undefined,'normal');doc.setFontSize(9);
+ const summaryRows=[
+   ['Boys Enrollment',fmt(boys),'Target Boys',fmt(boysTarget),'Remaining Boys',fmt(remainingBoys)],
+   ['Girls Enrollment',fmt(girls),'Target Girls',fmt(girlsTarget),'Remaining Girls',fmt(remainingGirls)],
+   ['Total Enrollment',fmt(total),'Total Target',fmt(boysTarget+girlsTarget),'Achievement',achievement.toFixed(1)+'%']
  ];
- summaryText.forEach((x,i)=>doc.text(x,28,sy+22+(i*17)));
+ doc.autoTable({body:summaryRows,startY:sy+10,theme:'grid',styles:{fontSize:9,cellPadding:7,halign:'center'},columnStyles:{0:{fontStyle:'bold'},2:{fontStyle:'bold'},4:{fontStyle:'bold'}}});
 
- // PAGE 2 — Detailed data
+ let yy=doc.lastAutoTable.finalY+25;
+ doc.setFont(undefined,'bold');doc.setFontSize(10);doc.text('Report Information',28,yy);
+ doc.setFont(undefined,'normal');doc.setFontSize(9);
+ doc.text('Report: '+(labels[currentView]||'Report')+' | Rows: '+fmt(td.data.length),28,yy+17);
+ doc.text('Data source: Latest automatically fetched SIS enrollment report.',28,yy+33);
+
+ // PAGE 2 — detailed data
  doc.addPage();
- doc.setFontSize(13);doc.setFont(undefined,'bold');doc.text(title+' - Detailed Data',28,28);
- doc.setFontSize(9);doc.setFont(undefined,'normal');doc.text('Latest Report: '+(reportDateTime||reportDate||'N/A'),28,43);
+ doc.setFont(undefined,'bold');doc.setFontSize(13);doc.text(title+' - Detailed Data',28,28);
+ doc.setFont(undefined,'normal');doc.setFontSize(9);doc.text('Latest Report: '+(reportDateTime||reportDate||'N/A'),28,43);
  doc.autoTable({
    head:[td.headers],
    body:td.data.map(r=>r.map(v=>typeof v==='number'?fmt(v):String(v))),
