@@ -63,8 +63,14 @@ function aggregate(list,field){
 }
 function filtered(){let s=document.getElementById('search').value.toLowerCase(),t=document.getElementById('tehsilFilter').value,w=document.getElementById('wingFilter').value;return rows.filter(r=>(!s||[r.school,r.markaz,r.tehsil,r.emis].some(x=>String(x).toLowerCase().includes(s)))&&(!t||r.tehsil===t)&&(!w||r.wing===w))}
 function renderCards(){
- let a=aggregate(rows,'tehsil').reduce((z,x)=>{for(const k of ['schools','male','female','total','maleTarget','femaleTarget','totalTarget','remainingTotal'])z[k]=(z[k]||0)+x[k];return z},{});
- document.getElementById('cards').innerHTML=[['Schools',a.schools],['Boys Enrollment',a.male],['Target Boys',a.maleTarget],['Remaining Boys',a.male-a.maleTarget],['Girls Enrollment',a.female],['Target Girls',a.femaleTarget],['Remaining Girls',a.female-a.femaleTarget],['Remaining Total Target',a.remainingTotal]].map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="num ${x[0].includes('Remaining')?cls(x[1]):''}">${fmt(x[1])}</div></div>`).join('');
+ const list=filtered();
+ const a=list.reduce((z,r)=>{
+   z.schools++; z.male+=r.male; z.female+=r.female; z.total+=r.total;
+   z.maleTarget+=r.maleTarget; z.femaleTarget+=r.femaleTarget; z.totalTarget+=r.totalTarget;
+   return z;
+ },{schools:0,male:0,female:0,total:0,maleTarget:0,femaleTarget:0,totalTarget:0});
+ const cards=[['Schools',a.schools],['Boys Enrollment',a.male],['Target Boys',a.maleTarget],['Remaining Boys',a.male-a.maleTarget],['Girls Enrollment',a.female],['Target Girls',a.femaleTarget],['Remaining Girls',a.female-a.femaleTarget],['Remaining Total Target',a.total-a.totalTarget]];
+ document.getElementById('cards').innerHTML=cards.map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="num ${x[0].includes('Remaining')?cls(x[1]):''}">${fmt(x[1])}</div></div>`).join('');
 }
 const schoolHeaders=['School','EMIS','Tehsil','Markaz','Wing','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement'];
 function schoolTable(list){return{headers:schoolHeaders,data:list.map(r=>[r.school,r.emis,r.tehsil,r.markaz,r.wing,r.male,r.maleTarget,r.remainingBoys,r.female,r.femaleTarget,r.remainingGirls,r.total,r.totalTarget,r.remainingTotal,Math.round(r.achievement*10)/10+'%'])}}
@@ -130,12 +136,18 @@ function exportRows(){
  XLSX.writeFile(wb,reportSuffix()+'.xlsx');
 }
 function exportPDF(){
- const td=tableData();
- const {jsPDF}=window.jspdf;
- const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
- doc.setFontSize(13);doc.text('Okara Enrollment Dashboard - '+reportLabel(),28,28);
- doc.setFontSize(9);doc.text('Latest Report: '+(reportDateTime||reportDate||'N/A'),28,43);
- doc.autoTable({head:[td.headers],body:td.data.map(r=>r.map(v=>typeof v==='number'?fmt(v):String(v))),startY:52,styles:{fontSize:6.5,cellPadding:3,overflow:'linebreak',halign:'center',valign:'middle'},headStyles:{fontSize:6.5,halign:'center',valign:'middle'},columnStyles:{0:{cellWidth:95},1:{cellWidth:55},2:{cellWidth:48},3:{cellWidth:58},4:{cellWidth:42}}});
+ const td=tableData(),list=filtered();
+ const a=list.reduce((z,r)=>{z.schools++;z.male+=r.male;z.female+=r.female;z.total+=r.total;z.maleTarget+=r.maleTarget;z.femaleTarget+=r.femaleTarget;z.totalTarget+=r.totalTarget;return z;},{schools:0,male:0,female:0,total:0,maleTarget:0,femaleTarget:0,totalTarget:0});
+ const cards=[['Schools',a.schools],['Boys Enrollment',a.male],['Target Boys',a.maleTarget],['Remaining Boys',a.male-a.maleTarget],['Girls Enrollment',a.female],['Target Girls',a.femaleTarget],['Remaining Girls',a.female-a.femaleTarget],['Remaining Total Target',a.total-a.totalTarget]];
+ const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
+ doc.setFontSize(15);doc.setTextColor(23,52,95);doc.text('Gender wise enrollment District Okara',421,28,{align:'center'});
+ doc.setFontSize(9);doc.setTextColor(82,101,122);doc.text('Dashboard developed by M. Sajid AEO 0349-6027086',421,42,{align:'center'});
+ doc.text('Latest SIS report: '+(reportDateTime||reportDate||'N/A'),421,55,{align:'center'});
+ const cardW=88,cardH=42,gap=8,startX=(842-(cardW*8+gap*7))/2;
+ cards.forEach((x,i)=>{const xPos=startX+i*(cardW+gap);doc.setFillColor(244,247,251);doc.setDrawColor(210,220,232);doc.roundedRect(xPos,68,cardW,cardH,5,5,'FD');doc.setFontSize(7);doc.setTextColor(82,101,122);doc.text(x[0],xPos+cardW/2,84,{align:'center'});doc.setFontSize(13);doc.setTextColor(x[0].includes('Remaining')?(x[1]<0?198:22):23,x[0].includes('Remaining')?(x[1]<0?40:128):52,x[0].includes('Remaining')?(x[1]<0?40:60):95);doc.text(fmt(x[1]),xPos+cardW/2,101,{align:'center'});});
+ doc.setFontSize(9);doc.setTextColor(82,101,122);doc.text('Performance rule: Green = On Target • Red = Target Not achieved',28,126);
+ doc.addPage();doc.setFontSize(12);doc.setTextColor(23,52,95);doc.text('Detailed '+reportLabel()+' Report',28,27);
+ doc.autoTable({head:[td.headers],body:td.data.map(r=>r.map(v=>typeof v==='number'?fmt(v):String(v))),startY:40,styles:{fontSize:6.5,cellPadding:3,overflow:'linebreak',halign:'center',valign:'middle'},headStyles:{fontSize:6.5,halign:'center',valign:'middle'},columnStyles:{0:{cellWidth:95},1:{cellWidth:55},2:{cellWidth:48},3:{cellWidth:58},4:{cellWidth:42}}});
  doc.save(reportSuffix()+'.pdf');
 }
 async function loadLiveData(){
