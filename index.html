@@ -4,8 +4,6 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Okara Gender Target vs Latest Enrollment</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.3/dist/jspdf.plugin.autotable.min.js"></script>
 <style>
 :root{--blue:#0b5ed7;--dark:#17345f;--bg:#f4f7fb;--card:#fff;--line:#dfe5ee;--muted:#667085;--red:#c62828;--green:#16803c}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Segoe UI,Arial,sans-serif;color:#172033}
@@ -19,18 +17,12 @@ header{background:linear-gradient(135deg,#12315b,#0b5ed7);color:#fff;padding:20p
 </style>
 </head>
 <body>
-<header><div class="wrap"><h1>Gender Target vs Latest Enrollment — Okara</h1><p>Upload only the latest enrollment Excel file. The latest target file is already built into this dashboard.</p></div></header>
+<header><div class="wrap"><h1>Gender Target vs Latest Enrollment — Okara</h1><p>Data is fetched automatically from SIS and updated daily. No manual upload is required.</p></div></header>
 <div class="wrap">
-<div class="upload">
+<div class="upload" style="border-style:solid;padding:12px">
 <b>LIVE OKARA ENROLLMENT DASHBOARD</b>
 <div id="liveStatus" style="margin:8px 0;font-weight:600">Loading latest SIS data…</div>
-<a id="latestDownload" class="action" href="data/Okara_Latest_Enrollment_Gender_Latest.xlsx" download>Download Latest Excel</a>
-<br><br>
-<details>
-<summary>Manual Excel upload (optional)</summary>
-<br><input id="fileInput" type="file" accept=".xlsx,.xls">
-<div class="hint">Normally no upload is required. The GitHub Action updates the latest workbook automatically every day.</div>
-</details>
+<div class="hint">Data is fetched automatically from SIS and updated daily. No manual upload or download is required.</div>
 </div>
 <div id="app" style="display:none">
 <div class="cards" id="cards"></div>
@@ -40,7 +32,7 @@ header{background:linear-gradient(135deg,#12315b,#0b5ed7);color:#fff;padding:20p
 <div class="toolbar">
 <input id="search" placeholder="Search school / markaz / tehsil / EMIS">
 <select id="tehsilFilter"><option value="">All Tehsils</option></select><select id="wingFilter"><option value="">All Wings</option></select>
-<button class="action" id="excelBtn">Download Selected Excel</button><button class="action pdf" id="pdfBtn">Download Selected PDF</button><button class="tab" id="refreshBtn">Refresh Live Data</button>
+<button class="tab" id="refreshBtn">Refresh Live Data</button>
 </div>
 <div class="note"><b>Remaining rule:</b> Target − Latest Enrollment. <span class="positive">Green = target still remaining</span> • <span class="negative">Red = enrollment above target</span>.</div><div class="note" id="info"></div><div class="tablebox"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
 </div></div>
@@ -120,200 +112,6 @@ function reportSuffix(){
  if(q)f.push('Search-'+fileSafe(q));
  return `${reportLabel()}${f.length?'_'+f.join('_'):'_All_Filters'}_${stampNow()}`;
 }
-function downloadExcel(){
- const td=tableData();
- const wb=XLSX.utils.book_new();
- XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([td.headers,...td.data]),reportLabel().slice(0,31));
- XLSX.writeFile(wb,`Gender_Target_Enrollment_${reportSuffix()}.xlsx`);
-}
-function downloadPDF(){
- const {jsPDF}=window.jspdf;
- const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
- const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight();
- const margin=24, bodyW=W-margin*2;
- const f=filtered(), td=tableData();
-
- // ---------- SUMMARY PAGE ----------
- const sums=f.reduce((a,r)=>{
-   a.schools++;
-   a.male+=r.male;a.female+=r.female;a.other+=r.other;a.total+=r.total;
-   a.maleTarget+=r.maleTarget;a.femaleTarget+=r.femaleTarget;a.totalTarget+=r.totalTarget;
-   return a;
- },{schools:0,male:0,female:0,other:0,total:0,maleTarget:0,femaleTarget:0,totalTarget:0});
- sums.maleDiff=sums.male-sums.maleTarget;
- sums.femaleDiff=sums.female-sums.femaleTarget;
- sums.totalDiff=sums.total-sums.totalTarget;
- const ach=sums.totalTarget?100*sums.total/sums.totalTarget:0;
-
- doc.setFont('helvetica','bold');doc.setFontSize(18);doc.setTextColor(20,32,51);
- doc.text('Enrollment Summary',W/2,34,{align:'center'});
- doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(90,103,120);
- doc.text(
-   `${reportLabel().replaceAll('_',' ')}  •  ${sums.schools.toLocaleString()} schools  •  Generated: ${new Date().toLocaleString()}`,
-   W/2,50,{align:'center'}
- );
-
- const cards=[
-   ['Schools',fmt(sums.schools),''],
-   ['Total Enrollment',fmt(sums.total),`Target ${fmt(sums.totalTarget)}`],
-   ['Boys Enrollment',fmt(sums.male),`Target ${fmt(sums.maleTarget)}`],
-   ['Girls Enrollment',fmt(sums.female),`Target ${fmt(sums.femaleTarget)}`],
-   ['Other Enrollment',fmt(sums.other),''],
-   ['Total Remaining',fmt(sums.totalDiff),sums.totalDiff<0?'Below target':'At / above target']
- ];
- const gap=10, cardW=(bodyW-gap*5)/6, cardH=64, y=72;
- cards.forEach((c,i)=>{
-   const x=margin+i*(cardW+gap);
-   doc.setFillColor(248,251,255);doc.setDrawColor(210,220,232);
-   doc.roundedRect(x,y,cardW,cardH,6,6,'FD');
-   doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(80,96,116);
-   doc.text(c[0],x+9,y+17);
-   doc.setFontSize(16);doc.setTextColor(20,32,51);
-   doc.text(c[1],x+9,y+39);
-   if(c[2]){doc.setFont('helvetica','normal');doc.setFontSize(6.8);doc.setTextColor(102,112,133);doc.text(c[2],x+9,y+53);}
- });
-
- const boxY=160, boxGap=14, boxW=(bodyW-boxGap)/2, boxH=138;
- [
-  {title:'Boys Enrollment',x:margin,enr:sums.male,target:sums.maleTarget,diff:sums.maleDiff},
-  {title:'Girls Enrollment',x:margin+boxW+boxGap,enr:sums.female,target:sums.femaleTarget,diff:sums.femaleDiff}
- ].forEach(b=>{
-   doc.setFillColor(255,255,255);doc.setDrawColor(210,220,232);
-   doc.roundedRect(b.x,boxY,boxW,boxH,6,6,'FD');
-   doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(20,32,51);
-   doc.text(b.title,b.x+12,boxY+21);
-   const rows=[['Enrollment',fmt(b.enr)],['Target',fmt(b.target)],['Remaining / Difference',fmt(b.diff)],['Achievement',b.target?(100*b.enr/b.target).toFixed(1)+'%':'0.0%']];
-   rows.forEach((v,i)=>{
-     const yy=boxY+45+i*20;
-     doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(95,105,120);
-     doc.text(v[0],b.x+12,yy);
-     doc.setFont('helvetica','bold');doc.setTextColor(20,32,51);
-     doc.text(v[1],b.x+boxW-12,yy,{align:'right'});
-   });
- });
-
- doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(20,32,51);
- doc.text('Overall Enrollment Achievement',margin,326);
- doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(80,92,108);
- doc.text(`${fmt(sums.total)} enrolled against target ${fmt(sums.totalTarget)} — ${ach.toFixed(1)}% achievement`,margin,344);
- doc.setFontSize(7.5);doc.setTextColor(105,115,130);
- doc.text('Detailed report follows. All enrollment, target, remaining and achievement columns are retained.',W/2,H-24,{align:'center'});
- doc.text('Page 1',W-margin,H-10,{align:'right'});
-
- // ---------- DETAIL PAGES ----------
- doc.addPage();
- const head=td.headers.map(h=>{
-   const map={
-    'Boys Enr.':'Boys\\nEnrollment','Target Boys':'Target\\nBoys','Remaining Boys':'Remaining\\nBoys',
-    'Girls Enr.':'Girls\\nEnrollment','Target Girls':'Target\\nGirls','Remaining Girls':'Remaining\\nGirls',
-    'Total Enr.':'Total\\nEnrollment','Total Target':'Total\\nTarget','Remaining Total':'Remaining\\nTotal',
-    'Achievement':'Achievement\\n%'
-   };
-   return map[h]||h;
- });
- const widths=td.headers.map(h=>{
-   if(h==='School')return 125;
-   if(h==='Tehsil')return 58;
-   if(h==='Markaz')return 72;
-   if(h==='Wing')return 46;
-   if(h==='EMIS')return 48;
-   if(h==='Schools')return 35;
-   if(h.includes('Achievement'))return 48;
-   return 48;
- });
- const scale=bodyW/widths.reduce((a,b)=>a+b,0);
-
- doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(20,32,51);
- doc.text(reportLabel().replaceAll('_',' ')+' — Gender Target vs Latest Enrollment',W/2,23,{align:'center'});
- doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(90,103,120);
- doc.text('Detailed enrollment report',W/2,35,{align:'center'});
-
- // Add a GRAND TOTAL row to every detailed PDF, based on the rows
- // actually shown in that PDF (including filtered / Top-10 / Last-10 views).
- const displayedTotals=td.data.reduce((a,r)=>{
-   const num=i=>Number(r[i])||0;
-   const ib=td.headers.indexOf('Boys Enr.'), tb=td.headers.indexOf('Target Boys');
-   const ig=td.headers.indexOf('Girls Enr.'), tg=td.headers.indexOf('Target Girls');
-   const it=td.headers.indexOf('Total Enr.'), tt=td.headers.indexOf('Total Target');
-   const is=td.headers.indexOf('Schools');
-   if(is>=0)a.schools+=num(is);
-   if(ib>=0)a.male+=num(ib);
-   if(tb>=0)a.maleTarget+=num(tb);
-   if(ig>=0)a.female+=num(ig);
-   if(tg>=0)a.femaleTarget+=num(tg);
-   if(it>=0)a.total+=num(it);
-   if(tt>=0)a.totalTarget+=num(tt);
-   return a;
- },{schools:0,male:0,maleTarget:0,female:0,femaleTarget:0,total:0,totalTarget:0});
- displayedTotals.maleDiff=displayedTotals.male-displayedTotals.maleTarget;
- displayedTotals.femaleDiff=displayedTotals.female-displayedTotals.femaleTarget;
- displayedTotals.totalDiff=displayedTotals.total-displayedTotals.totalTarget;
- const displayedAch=displayedTotals.totalTarget?100*displayedTotals.total/displayedTotals.totalTarget:0;
-
- const grandRow=td.headers.map((h,i)=>{
-   if(i===0)return 'GRAND TOTAL';
-   if(h==='Schools')return displayedTotals.schools;
-   if(h==='Boys Enr.')return displayedTotals.male;
-   if(h==='Target Boys')return displayedTotals.maleTarget;
-   if(h==='Remaining Boys')return displayedTotals.maleDiff;
-   if(h==='Girls Enr.')return displayedTotals.female;
-   if(h==='Target Girls')return displayedTotals.femaleTarget;
-   if(h==='Remaining Girls')return displayedTotals.femaleDiff;
-   if(h==='Total Enr.')return displayedTotals.total;
-   if(h==='Total Target')return displayedTotals.totalTarget;
-   if(h==='Remaining Total')return displayedTotals.totalDiff;
-   if(h==='Achievement')return displayedAch.toFixed(1)+'%';
-   return '';
- });
- let detailBody=[...td.data,grandRow];
-
- doc.autoTable({
-   head:[head],body:detailBody,startY:45,
-   margin:{left:margin,right:margin,top:45,bottom:20},
-   tableWidth:bodyW,
-   columnStyles:Object.fromEntries(widths.map((w,i)=>[i,{cellWidth:w*scale}])),
-   styles:{
-     font:'helvetica',fontSize:7.1,
-     cellPadding:{top:4.2,bottom:4.2,left:2.5,right:2.5},
-     overflow:'linebreak',valign:'middle',halign:'center',
-     lineWidth:.25,lineColor:[185,194,205],textColor:[20,32,51],minCellHeight:22
-   },
-   headStyles:{
-     fontSize:7,fontStyle:'bold',fillColor:[11,94,215],textColor:[255,255,255],
-     halign:'center',valign:'middle',cellPadding:{top:5,bottom:5,left:2,right:2},minCellHeight:30
-   },
-   alternateRowStyles:{fillColor:[250,252,255]},
-   showHead:'everyPage',
-   rowPageBreak:'avoid',
-   didParseCell:d=>{
-     const last=detailBody.length-1;
-     if(d.row.index===last){
-       d.cell.styles.fontStyle='bold';d.cell.styles.fillColor=[221,232,245];d.cell.styles.lineWidth=.4;
-     }
-     const h=td.headers[d.column.index]||'', raw=d.row.raw, idx=n=>td.headers.indexOf(n);
-     if(d.section==='body'){
-       let v;
-       if(h==='Remaining Boys')v=Number(raw[idx('Remaining Boys')]);
-       if(h==='Remaining Girls')v=Number(raw[idx('Remaining Girls')]);
-       if(h==='Remaining Total')v=Number(raw[idx('Remaining Total')]);
-       if(Number.isFinite(v))d.cell.styles.textColor=v>=0?[22,128,60]:[198,40,40];
-       if(h==='Achievement'){
-         const n=parseFloat(String(d.cell.raw));
-         if(Number.isFinite(n))d.cell.styles.textColor=n>=100?[22,128,60]:n<80?[198,40,40]:[178,106,0];
-         d.cell.styles.fontStyle='bold';
-       }
-       if(d.column.index===0)d.cell.styles.halign='left';
-     }
-   },
-   didDrawPage:d=>{
-     const page=doc.getNumberOfPages();
-     doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(105,115,130);
-     doc.text(`Page ${page}`,W-margin,H-8,{align:'right'});
-     doc.text('Enrollment detail • headings wrapped • multi-page report',margin,H-8);
-   }
- });
- doc.save(`Gender_Target_Enrollment_${reportSuffix()}.pdf`);
-}
 async function loadWorkbookBuffer(buffer, sourceName){
  const dateMatch=String(sourceName||'').match(/(20\\d{2}[-_]\\d{2}[-_]\\d{2})/);
  reportDate=dateMatch?dateMatch[1].replaceAll('_','-'):new Date().toISOString().slice(0,10);
@@ -345,12 +143,7 @@ async function loadLiveData(){
    console.error(err);
  }
 }
-document.getElementById('fileInput').addEventListener('change',async e=>{
- let file=e.target.files[0];if(!file)return;
- try{await loadWorkbookBuffer(await file.arrayBuffer(),file.name)}
- catch(err){alert('Excel file could not be read.\\n\\n'+err.message)}
-});
 loadLiveData();
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentView=b.dataset.view;render()}));
-['search','tehsilFilter','wingFilter'].forEach(id=>document.getElementById(id).addEventListener('input',render));document.getElementById('excelBtn').onclick=downloadExcel;document.getElementById('pdfBtn').onclick=downloadPDF;document.getElementById('refreshBtn').onclick=loadLiveData;
+['search','tehsilFilter','wingFilter'].forEach(id=>document.getElementById(id).addEventListener('input',render));document.getElementById('refreshBtn').onclick=loadLiveData;
 </script></body></html>
