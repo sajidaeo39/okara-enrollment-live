@@ -14,7 +14,7 @@ header{background:transparent;color:#172033;padding:12px 18px 6px}header .wrap{b
 .cards{display:grid;grid-template-columns:repeat(8,minmax(110px,1fr));gap:8px;margin-bottom:10px}.card{position:relative;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 9px 9px;box-shadow:0 4px 12px #0000000d}.card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--accent,#0b5ed7)}.card:nth-child(1){background:#eef5ff;--accent:#2563eb}.card:nth-child(2){background:#eaf8f0;--accent:#16a34a}.card:nth-child(3){background:#fff6df;--accent:#d97706}.card:nth-child(4){background:#fff0f0;--accent:#dc2626}.card:nth-child(5){background:#f0f7ff;--accent:#0284c7}.card:nth-child(6){background:#f5f0ff;--accent:#7c3aed}.card:nth-child(7){background:#fff1f2;--accent:#e11d48}.card:nth-child(8){background:#eefbf7;--accent:#0f766e}.label{font-size:11px;color:#475467;font-weight:600}.num{font-size:18px;font-weight:800;margin-top:5px;color:#172033}
 .tabs{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.tab{background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:8px 11px;font-weight:600;cursor:pointer}.tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
 .toolbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid var(--line);padding:10px;border-radius:11px;margin-bottom:10px}.toolbar input,.toolbar select{padding:8px 9px;border:1px solid #cbd5e1;border-radius:7px}.toolbar input{min-width:240px}.action{border:0;border-radius:7px;padding:8px 11px;background:#0f766e;color:#fff;font-weight:600;cursor:pointer}.pdf{background:#b42318}
-.note{font-size:11px;color:var(--muted);margin:5px 0 7px}.tablebox{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:auto;max-height:68vh}table{border-collapse:collapse;width:100%;font-size:10px;table-layout:fixed}th,td{padding:5px 4px;white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.15;border-bottom:1px solid var(--line);text-align:right}th{position:sticky;top:0;background:#edf4fd;z-index:1}th:first-child,td:first-child{text-align:left}.negative{color:var(--red);font-weight:700}.positive{color:var(--green);font-weight:700}.rank{font-weight:700}
+.note{font-size:11px;color:var(--muted);margin:5px 0 7px}.tablebox{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:auto;max-height:68vh}table{border-collapse:collapse;width:100%;font-size:10px;table-layout:fixed}th,td{padding:9px 5px;white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.3;border-bottom:1px solid var(--line);text-align:right}th{position:sticky;top:0;background:#edf4fd;z-index:1}th:first-child,td:first-child{text-align:left}.negative{color:var(--red);font-weight:700}.positive{color:var(--green);font-weight:700}.rank{font-weight:700}
 @media(max-width:1050px){.cards{grid-template-columns:repeat(4,1fr)}}@media(max-width:650px){.cards{grid-template-columns:repeat(2,1fr)}.wrap{padding:9px}.toolbar input{min-width:100%}}
 </style>
 </head>
@@ -158,14 +158,14 @@ function exportPDF(){
  const cardW=88,cardH=42,gap=8,startX=(842-(cardW*8+gap*7))/2;
  cards.forEach((x,i)=>{const xp=startX+i*(cardW+gap);doc.setFillColor(244,247,251);doc.setDrawColor(210,220,232);doc.roundedRect(xp,72,cardW,cardH,5,5,'FD');doc.setFontSize(7.5);doc.setTextColor(82,101,122);doc.text(x[0],xp+cardW/2,88,{align:'center'});doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(23,52,95);doc.text(fmt(x[1]),xp+cardW/2,106,{align:'center'});doc.setFont('helvetica','normal');});
  doc.setFontSize(9);doc.setTextColor(82,101,122);doc.text('Performance rule: Green = On Target • Red = Target Not achieved',28,130);
- let startY=145;
+ let startY=165;
  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(23,52,95);doc.text(reportLabel()+' Report',28,startY);
  startY+=10;
  const pdfBody=td.data.map(r=>r.map(v=>typeof v==='number'?fmt(v):String(v))); pdfBody.push(totalRow(td.headers,td.data).map(v=>typeof v==='number'?fmt(v):String(v)));
  doc.autoTable({head:[td.headers],body:pdfBody,startY:startY,theme:'grid',
- styles:{font:'helvetica',fontSize:12,cellPadding:{top:5,right:4,bottom:5,left:4},overflow:'linebreak',valign:'middle',halign:'center',lineColor:[210,220,232],lineWidth:.35},
- headStyles:{fontSize:12,fontStyle:'bold',fillColor:[214,229,244],textColor:[23,52,95],halign:'center',valign:'middle',cellPadding:6},
- bodyStyles:{fontSize:12,minCellHeight:28,halign:'center',valign:'middle'},
+ styles:{font:'helvetica',fontSize:11,cellPadding:{top:6,right:4,bottom:6,left:4},overflow:'linebreak',valign:'middle',halign:'center',lineColor:[210,220,232],lineWidth:.35},
+ headStyles:{fontSize:11,fontStyle:'bold',fillColor:[214,229,244],textColor:[23,52,95],halign:'center',valign:'middle',cellPadding:6},
+ bodyStyles:{fontSize:11,minCellHeight:30,halign:'center',valign:'middle'},
  columnStyles:{0:{cellWidth:105},1:{cellWidth:58},2:{cellWidth:48},3:{cellWidth:62},4:{cellWidth:45}},
  margin:{left:28,right:28,top:10,bottom:24},
  didParseCell:function(data){if(data.section==='body' && data.column.index===0){data.cell.styles.halign='left';} if(data.section==='body' && data.row.index===pdfBody.length-1){data.cell.styles.fontStyle='bold';data.cell.styles.fillColor=[226,240,230];data.cell.styles.textColor=[23,52,95];}}
