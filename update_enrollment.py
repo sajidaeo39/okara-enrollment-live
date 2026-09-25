@@ -5,6 +5,7 @@
 import sys, subprocess, importlib, re, time, shutil
 from pathlib import Path
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 # Install required packages automatically
 for module, package in {
@@ -372,7 +373,7 @@ def main():
     schools_all = []
     errors = []
 
-    started = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    started = datetime.now(ZoneInfo("Asia/Karachi")).strftime("%Y-%m-%d %H:%M:%S")
 
     for tid, tname in selected:
         print()
@@ -512,7 +513,7 @@ def main():
 
     # GitHub-friendly output: one stable "latest" workbook plus a dated archive.
     # The dashboard reads the stable file; the dated file provides a daily history.
-    stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    stamp = datetime.now(ZoneInfo("Asia/Karachi")).strftime("%Y-%m-%d_%H%M%S")
     out_dir = Path(__file__).resolve().parent / "data"
     out_dir.mkdir(parents=True, exist_ok=True)
     final = out_dir / "Okara_Latest_Enrollment_Gender_Latest.xlsx"
