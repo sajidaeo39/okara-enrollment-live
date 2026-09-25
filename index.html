@@ -156,17 +156,17 @@ function exportPDF(){
  doc.setFontSize(11);doc.setTextColor(82,101,122);doc.text('Dashboard developed by M.Sajid AEO Markaz Amli Moti (W)',421,45,{align:'center'});
  doc.setFont('helvetica','normal');doc.text('Latest SIS report: '+(reportDateTime||reportDate||'N/A'),421,61,{align:'center'});
  const cardW=88,cardH=42,gap=8,startX=(842-(cardW*8+gap*7))/2;
- cards.forEach((x,i)=>{const xp=startX+i*(cardW+gap);doc.setFillColor(244,247,251);doc.setDrawColor(210,220,232);doc.roundedRect(xp,72,cardW,cardH,5,5,'FD');doc.setFontSize(7.5);doc.setTextColor(82,101,122);doc.text(x[0],xp+cardW/2,88,{align:'center'});doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(23,52,95);doc.text(fmt(x[1]),xp+cardW/2,106,{align:'center'});doc.setFont('helvetica','normal');});
+ cards.forEach((x,i)=>{const xp=startX+i*(cardW+gap);doc.setFillColor(244,247,251);doc.setDrawColor(210,220,232);doc.roundedRect(xp,72,cardW,cardH,5,5,'FD');doc.setFontSize(9);doc.setTextColor(82,101,122);doc.text(x[0],xp+cardW/2,88,{align:'center'});doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(23,52,95);doc.text(fmt(x[1]),xp+cardW/2,106,{align:'center'});doc.setFont('helvetica','normal');});
  doc.setFontSize(9);doc.setTextColor(82,101,122);doc.text('Performance rule: Green = On Target • Red = Target Not achieved',28,130);
  let startY=165;
  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(23,52,95);doc.text(reportLabel()+' Report',28,startY);
  startY+=10;
- const pdfBody=td.data.map(r=>r.map(v=>typeof v==='number'?fmt(v):String(v))); pdfBody.push(totalRow(td.headers,td.data).map(v=>typeof v==='number'?fmt(v):String(v)));
+ const pdfBody=td.data.map(r=>r.map(v=>typeof v==='number'?fmt(v):String(v))); const tr=totalRow(td.headers,td.data); const achIdx=td.headers.findIndex(h=>String(h).toLowerCase()==='achievement'); if(achIdx>=0){const total=tr[td.headers.findIndex(h=>String(h).toLowerCase()==='total enr.')];const target=tr[td.headers.findIndex(h=>String(h).toLowerCase()==='total target')];tr[achIdx]=target?((total/target)*100).toFixed(1)+'%':'0.0%';} pdfBody.push(tr.map(v=>typeof v==='number'?fmt(v):String(v)));
  doc.autoTable({head:[td.headers],body:pdfBody,startY:startY,theme:'grid',
- styles:{font:'helvetica',fontSize:11,cellPadding:{top:6,right:4,bottom:6,left:4},overflow:'linebreak',valign:'middle',halign:'center',lineColor:[210,220,232],lineWidth:.35},
- headStyles:{fontSize:11,fontStyle:'bold',fillColor:[214,229,244],textColor:[23,52,95],halign:'center',valign:'middle',cellPadding:6},
- bodyStyles:{fontSize:11,minCellHeight:30,halign:'center',valign:'middle'},
- columnStyles:{0:{cellWidth:105},1:{cellWidth:58},2:{cellWidth:48},3:{cellWidth:62},4:{cellWidth:45}},
+ styles:{font:'helvetica',fontSize:9,cellPadding:{top:5,right:3,bottom:5,left:3},overflow:'linebreak',valign:'middle',halign:'center',lineColor:[210,220,232],lineWidth:.35},
+ headStyles:{fontSize:9,fontStyle:'bold',fillColor:[214,229,244],textColor:[23,52,95],halign:'center',valign:'middle',cellPadding:6},
+ bodyStyles:{fontSize:9,minCellHeight:25,halign:'center',valign:'middle'},
+ columnStyles:{0:{cellWidth:112},1:{cellWidth:48},2:{cellWidth:60},3:{cellWidth:60},4:{cellWidth:58}},
  margin:{left:28,right:28,top:10,bottom:24},
  didParseCell:function(data){if(data.section==='body' && data.column.index===0){data.cell.styles.halign='left';} if(data.section==='body' && data.row.index===pdfBody.length-1){data.cell.styles.fontStyle='bold';data.cell.styles.fillColor=[226,240,230];data.cell.styles.textColor=[23,52,95];}}
  });
