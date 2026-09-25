@@ -139,7 +139,7 @@ function exportPDF(){
  doc.save(reportSuffix()+'.pdf');
 }
 async function loadLiveData(){
- const status=document.getElementById('liveStatus');
+ const status={set textContent(v){},set style(v){}};
  try{
    const url='data/Okara_Latest_Enrollment_Gender_Latest.xlsx?ts='+Date.now();
    const resp=await fetch(url,{cache:'no-store'});
@@ -147,10 +147,10 @@ async function loadLiveData(){
    const buf=await resp.arrayBuffer();
    await loadWorkbookBuffer(buf,'Okara_Latest_Enrollment_Gender_Latest.xlsx');
    status.textContent='LIVE • Latest SIS report: '+(reportDateTime||reportDate); document.getElementById('headerLatest').textContent='Latest SIS report: '+(reportDateTime||reportDate);
-   status.style.color='#16803c';
+   
  }catch(err){
-   status.textContent='Live data could not be loaded. Please try Refresh Live Data.';
-   status.style.color='#b42318';
+   document.getElementById('headerLatest').textContent='Latest SIS report: Data not available';
+   
    console.error(err);
  }
 }
