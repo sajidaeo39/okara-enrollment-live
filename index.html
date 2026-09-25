@@ -2,30 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Okara Gender Target vs Latest Enrollment</title>
+<title>District Okara Latest Gender wise Enrollment</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 <style>
-:root{--blue:#0b5ed7;--dark:#17345f;--bg:#f4f7fb;--card:#fff;--line:#dfe5ee;--muted:#667085;--red:#c62828;--green:#16803c}
+:root{--blue:#155eef;--dark:#102a43;--navy:#0b1f33;--bg:#f3f6fa;--card:#fff;--line:#d9e2ec;--muted:#64748b;--red:#c62828;--green:#16803c;--gold:#d4a72c}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Segoe UI,Arial,sans-serif;color:#172033}
-header{background:linear-gradient(135deg,#12315b,#0b5ed7);color:#fff;padding:20px 24px}header h1{margin:0;font-size:24px}header p{margin:5px 0 0;opacity:.9}
+header{background:linear-gradient(135deg,#0b1f33 0%,#123e63 55%,#155eef 100%);color:#fff;padding:22px 24px;box-shadow:0 3px 14px #0b1f3326}header h1{margin:0;font-size:25px;letter-spacing:.2px}header p{margin:6px 0 0;opacity:.92;font-size:13px}header .live{margin-top:10px;font-size:12px;font-weight:600;color:#e8f1ff}
 .wrap{max-width:1550px;margin:auto;padding:18px}.upload{background:#fff;border:2px dashed #9db5d8;border-radius:13px;padding:18px;text-align:center;margin-bottom:16px}.hint{font-size:12px;color:var(--muted)}
 .cards{display:grid;grid-template-columns:repeat(8,minmax(125px,1fr));gap:10px;margin-bottom:14px}.card{background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px;box-shadow:0 2px 8px #00000008}.label{font-size:11px;color:var(--muted)}.num{font-size:20px;font-weight:700;margin-top:4px}
 .tabs{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.tab{background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:8px 11px;font-weight:600;cursor:pointer}.tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
-.toolbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid var(--line);padding:10px;border-radius:11px;margin-bottom:10px}.toolbar input,.toolbar select{padding:8px 9px;border:1px solid #cbd5e1;border-radius:7px}.toolbar input{min-width:240px}.action{border:0;border-radius:7px;padding:8px 11px;background:#0f766e;color:#fff;font-weight:600;cursor:pointer}.pdf{background:#b42318}
+.toolbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid var(--line);padding:10px;border-radius:11px;margin-bottom:10px}.toolbar input,.toolbar select{padding:8px 9px;border:1px solid #cbd5e1;border-radius:7px}.toolbar input{min-width:240px}.action{border:0;border-radius:7px;padding:8px 11px;background:#0f766e;color:#fff;font-weight:600;cursor:pointer;box-shadow:0 1px 3px #0002}.pdf{background:#b42318}
 .note{font-size:12px;color:var(--muted);margin:7px 0 11px}.tablebox{background:#fff;border:1px solid var(--line);border-radius:11px;overflow:auto;max-height:67vh}table{border-collapse:collapse;width:100%;font-size:11px}th,td{padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:right}th{position:sticky;top:0;background:#edf4fd;z-index:1}th:first-child,td:first-child{text-align:left}.negative{color:var(--red);font-weight:700}.positive{color:var(--green);font-weight:700}.rank{font-weight:700}
 @media(max-width:1050px){.cards{grid-template-columns:repeat(4,1fr)}}@media(max-width:650px){.cards{grid-template-columns:repeat(2,1fr)}.wrap{padding:9px}.toolbar input{min-width:100%}}
 </style>
 </head>
 <body>
-<header><div class="wrap"><h1>Gender Target vs Latest Enrollment — Okara</h1><p>Data is fetched automatically from SIS and updated daily. No manual upload is required.</p></div></header>
+<header><div class="wrap"><h1>District Okara Latest Gender wise Enrollment</h1><p>Developed by M. Sajid, AEO Markaz Amli Moti (W), Depalpur</p><div class="live" id="liveStatus">LIVE • Loading latest SIS data…</div></div></header>
 <div class="wrap">
-<div class="upload" style="border-style:solid;padding:12px">
-<b>LIVE OKARA ENROLLMENT DASHBOARD</b>
-<div id="liveStatus" style="margin:8px 0;font-weight:600">Loading latest SIS data…</div>
-<div class="hint">Data is fetched automatically from SIS and updated daily. No manual upload is required. Excel and PDF reports can be downloaded for the selected view and filters.</div>
-</div>
 <div id="app" style="display:none">
 <div class="cards" id="cards"></div>
 <div class="tabs">
