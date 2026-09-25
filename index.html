@@ -137,9 +137,63 @@ function exportPDF(){
  const td=tableData();
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
- doc.setFontSize(13);doc.text('Okara Enrollment Dashboard - '+reportLabel(),28,28);
- doc.setFontSize(9);doc.text('Latest Report: '+(reportDateTime||reportDate||'N/A'),28,43);
- doc.autoTable({head:[td.headers],body:td.data.map(r=>r.map(v=>typeof v==='number'?fmt(v):String(v))),startY:52,styles:{fontSize:6,cellPadding:3},headStyles:{fontSize:6}});
+ const f=filtered();
+ const totalSchools=f.length;
+ const boys=f.reduce((a,r)=>a+r.male,0), girls=f.reduce((a,r)=>a+r.female,0), total=f.reduce((a,r)=>a+r.total,0);
+ const boysTarget=f.reduce((a,r)=>a+r.maleTarget,0), girlsTarget=f.reduce((a,r)=>a+r.femaleTarget,0), totalTarget=f.reduce((a,r)=>a+r.totalTarget,0);
+ const achievement=totalTarget?(total/totalTarget*100):0;
+ const labels={school:'School Wise',markaz:'Markaz Wise',tehsil:'Tehsil Wise',wing:'Wing Wise',lowSchools:'Low Performing Schools'};
+ const title='Okara Enrollment Dashboard - '+(labels[currentView]||'Report');
+
+ // PAGE 1 — Summary
+ doc.setFontSize(18);doc.setFont(undefined,'bold');doc.text(title,28,34);
+ doc.setFontSize(10);doc.setFont(undefined,'normal');
+ doc.text('Latest Report: '+(reportDateTime||reportDate||'N/A'),28,52);
+ doc.text('Filters: Tehsil = '+(document.getElementById('tehsilFilter').value||'All')+
+          ' | Wing = '+(document.getElementById('wingFilter').value||'All')+
+          ' | Search = '+(document.getElementById('search').value.trim()||'All'),28,68);
+
+ const summaryRows=[
+  ['Schools',fmt(totalSchools),'Boys Enrollment',fmt(boys),'Girls Enrollment',fmt(girls),'Total Enrollment',fmt(total)],
+  ['Target Boys',fmt(boysTarget),'Target Girls',fmt(girlsTarget),'Total Target',fmt(totalTarget),'Achievement',achievement.toFixed(1)+'%'],
+  ['Remaining Boys',fmt(boys-boysTarget),'Remaining Girls',fmt(girls-girlsTarget),'Remaining Total',fmt(total-totalTarget),'Report Rows',fmt(td.data.length)]
+ ];
+ doc.autoTable({
+   body:summaryRows,
+   startY:88,
+   theme:'grid',
+   styles:{fontSize:10,cellPadding:8,halign:'center',valign:'middle'},
+   columnStyles:{0:{fontStyle:'bold'},2:{fontStyle:'bold'},4:{fontStyle:'bold'},6:{fontStyle:'bold'}}
+ });
+
+ let sy=doc.lastAutoTable.finalY+28;
+ doc.setFontSize(12);doc.setFont(undefined,'bold');doc.text('Report Summary',28,sy);
+ doc.setFontSize(9);doc.setFont(undefined,'normal');
+ const summaryText=[
+   'Report: '+(labels[currentView]||'Report'),
+   'Schools included after filters: '+fmt(totalSchools),
+   'Boys: '+fmt(boys)+' | Girls: '+fmt(girls)+' | Total Enrollment: '+fmt(total),
+   'Target: Boys '+fmt(boysTarget)+' | Girls '+fmt(girlsTarget)+' | Total '+fmt(totalTarget),
+   'Remaining vs Target: Boys '+fmt(boys-boysTarget)+' | Girls '+fmt(girls-girlsTarget)+' | Total '+fmt(total-totalTarget),
+   'Achievement: '+achievement.toFixed(1)+'%',
+   'Generated from the latest automatically fetched SIS report.'
+ ];
+ summaryText.forEach((x,i)=>doc.text(x,28,sy+22+(i*17)));
+
+ // PAGE 2 — Detailed data
+ doc.addPage();
+ doc.setFontSize(13);doc.setFont(undefined,'bold');doc.text(title+' - Detailed Data',28,28);
+ doc.setFontSize(9);doc.setFont(undefined,'normal');doc.text('Latest Report: '+(reportDateTime||reportDate||'N/A'),28,43);
+ doc.autoTable({
+   head:[td.headers],
+   body:td.data.map(r=>r.map(v=>typeof v==='number'?fmt(v):String(v))),
+   startY:52,
+   margin:{left:20,right:20},
+   styles:{fontSize:6,cellPadding:3,overflow:'linebreak'},
+   headStyles:{fontSize:6},
+   theme:'grid',
+   repeatHeader:true
+ });
  doc.save(reportSuffix()+'.pdf');
 }
 async function loadLiveData(){
