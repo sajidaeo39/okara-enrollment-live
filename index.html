@@ -161,7 +161,8 @@ function exportPDF(){
  let startY=145;
  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(23,52,95);doc.text(reportLabel()+' Report',28,startY);
  startY+=10;
- const pdfBody=td.data.map(r=>r.map(v=>typeof v==='number'?fmt(v):String(v))); pdfBody.push(totalRow(td.headers,td.data).map(v=>typeof v==='number'?fmt(v):String(v)));\n doc.autoTable({head:[td.headers],body:pdfBody,startY:startY,theme:'grid',
+ const pdfBody=td.data.map(r=>r.map(v=>typeof v==='number'?fmt(v):String(v))); pdfBody.push(totalRow(td.headers,td.data).map(v=>typeof v==='number'?fmt(v):String(v)));
+ doc.autoTable({head:[td.headers],body:pdfBody,startY:startY,theme:'grid',
  styles:{font:'helvetica',fontSize:12,cellPadding:{top:5,right:4,bottom:5,left:4},overflow:'linebreak',valign:'middle',halign:'center',lineColor:[210,220,232],lineWidth:.35},
  headStyles:{fontSize:12,fontStyle:'bold',fillColor:[214,229,244],textColor:[23,52,95],halign:'center',valign:'middle',cellPadding:6},
  bodyStyles:{fontSize:12,minCellHeight:28,halign:'center',valign:'middle'},
