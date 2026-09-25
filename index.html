@@ -19,7 +19,7 @@ header{background:transparent;color:#172033;padding:12px 18px 6px}header .wrap{b
 </style>
 </head>
 <body>
-<header><div class="wrap"><h1>Gender wise enrollment District Okara</h1><p>Dashboard developed by M. Sajid AEO 0349-6027086</p><div id="headerLatest" style="margin-top:4px;font-size:12px;font-weight:600;color:#52657a">Latest SIS report: Loading…</div></div></header>
+<header><div class="wrap"><h1>Gender wise enrollment District Okara</h1><p>Dashboard developed by M.Sajid AEO Markaz Amli Moti (W)</p><div id="headerLatest" style="margin-top:4px;font-size:12px;font-weight:600;color:#52657a">Latest SIS report: Loading…</div></div></header>
 <div class="wrap">
 
 <div id="app" style="display:none">
@@ -140,14 +140,23 @@ function exportPDF(){
  const a=list.reduce((z,r)=>{z.schools++;z.male+=r.male;z.female+=r.female;z.total+=r.total;z.maleTarget+=r.maleTarget;z.femaleTarget+=r.femaleTarget;z.totalTarget+=r.totalTarget;return z;},{schools:0,male:0,female:0,total:0,maleTarget:0,femaleTarget:0,totalTarget:0});
  const cards=[['Schools',a.schools],['Boys Enrollment',a.male],['Target Boys',a.maleTarget],['Remaining Boys',a.male-a.maleTarget],['Girls Enrollment',a.female],['Target Girls',a.femaleTarget],['Remaining Girls',a.female-a.femaleTarget],['Remaining Total Target',a.total-a.totalTarget]];
  const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
- doc.setFontSize(15);doc.setTextColor(23,52,95);doc.text('Gender wise enrollment District Okara',421,28,{align:'center'});
- doc.setFontSize(9);doc.setTextColor(82,101,122);doc.text('Dashboard developed by M. Sajid AEO 0349-6027086',421,42,{align:'center'});
- doc.text('Latest SIS report: '+(reportDateTime||reportDate||'N/A'),421,55,{align:'center'});
+ doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(23,52,95);doc.text('Gender wise enrollment District Okara',421,28,{align:'center'});
+ doc.setFontSize(11);doc.setTextColor(82,101,122);doc.text('Dashboard developed by M.Sajid AEO Markaz Amli Moti (W)',421,45,{align:'center'});
+ doc.setFont('helvetica','normal');doc.text('Latest SIS report: '+(reportDateTime||reportDate||'N/A'),421,61,{align:'center'});
  const cardW=88,cardH=42,gap=8,startX=(842-(cardW*8+gap*7))/2;
- cards.forEach((x,i)=>{const xPos=startX+i*(cardW+gap);doc.setFillColor(244,247,251);doc.setDrawColor(210,220,232);doc.roundedRect(xPos,68,cardW,cardH,5,5,'FD');doc.setFontSize(7);doc.setTextColor(82,101,122);doc.text(x[0],xPos+cardW/2,84,{align:'center'});doc.setFontSize(13);doc.setTextColor(x[0].includes('Remaining')?(x[1]<0?198:22):23,x[0].includes('Remaining')?(x[1]<0?40:128):52,x[0].includes('Remaining')?(x[1]<0?40:60):95);doc.text(fmt(x[1]),xPos+cardW/2,101,{align:'center'});});
- doc.setFontSize(9);doc.setTextColor(82,101,122);doc.text('Performance rule: Green = On Target • Red = Target Not achieved',28,126);
- doc.addPage();doc.setFontSize(12);doc.setTextColor(23,52,95);doc.text('Detailed '+reportLabel()+' Report',28,27);
- doc.autoTable({head:[td.headers],body:td.data.map(r=>r.map(v=>typeof v==='number'?fmt(v):String(v))),startY:40,styles:{fontSize:6.5,cellPadding:3,overflow:'linebreak',halign:'center',valign:'middle'},headStyles:{fontSize:6.5,halign:'center',valign:'middle'},columnStyles:{0:{cellWidth:95},1:{cellWidth:55},2:{cellWidth:48},3:{cellWidth:58},4:{cellWidth:42}}});
+ cards.forEach((x,i)=>{const xp=startX+i*(cardW+gap);doc.setFillColor(244,247,251);doc.setDrawColor(210,220,232);doc.roundedRect(xp,72,cardW,cardH,5,5,'FD');doc.setFontSize(7.5);doc.setTextColor(82,101,122);doc.text(x[0],xp+cardW/2,88,{align:'center'});doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(23,52,95);doc.text(fmt(x[1]),xp+cardW/2,106,{align:'center'});doc.setFont('helvetica','normal');});
+ doc.setFontSize(9);doc.setTextColor(82,101,122);doc.text('Performance rule: Green = On Target • Red = Target Not achieved',28,130);
+ let startY=145;
+ doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(23,52,95);doc.text(reportLabel()+' Report',28,startY);
+ startY+=10;
+ doc.autoTable({head:[td.headers],body:td.data.map(r=>r.map(v=>typeof v==='number'?fmt(v):String(v))),startY:startY,theme:'grid',
+ styles:{font:'helvetica',fontSize:12,cellPadding:{top:5,right:4,bottom:5,left:4},overflow:'linebreak',valign:'middle',halign:'center',lineColor:[210,220,232],lineWidth:.35},
+ headStyles:{fontSize:12,fontStyle:'bold',fillColor:[230,238,247],textColor:[23,52,95],halign:'center',valign:'middle',cellPadding:5},
+ bodyStyles:{fontSize:12,minCellHeight:24,halign:'center',valign:'middle'},
+ columnStyles:{0:{cellWidth:105},1:{cellWidth:58},2:{cellWidth:48},3:{cellWidth:62},4:{cellWidth:45}},
+ margin:{left:28,right:28,top:10,bottom:24},
+ didParseCell:function(data){if(data.section==='body' && data.column.index===0){data.cell.styles.halign='left';}}
+ });
  doc.save(reportSuffix()+'.pdf');
 }
 async function loadLiveData(){
