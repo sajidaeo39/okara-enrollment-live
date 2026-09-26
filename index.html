@@ -5,7 +5,7 @@
 <title>Okara Gender Target vs Latest Enrollment</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>:root{--blue:#0b5ed7;--dark:#17345f;--bg:#f4f7fb;--card:#fff;--line:#dfe5ee;--muted:#667085;--red:#c62828;--green:#16803c;--content:1180px;--control-h:38px}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -186,7 +186,7 @@ function exportPDF(){
  const td=tableData();
  const a=list.reduce((z,r)=>{z.schools++;z.male+=r.male;z.female+=r.female;z.total+=r.total;z.maleTarget+=r.maleTarget;z.femaleTarget+=r.femaleTarget;z.totalTarget+=r.totalTarget;return z;},{schools:0,male:0,female:0,total:0,maleTarget:0,femaleTarget:0,totalTarget:0});
  const cards=[['Schools',a.schools],['Boys Enrollment',a.male],['Target Boys',a.maleTarget],['Remaining Boys',a.male-a.maleTarget],['Girls Enrollment',a.female],['Target Girls',a.femaleTarget],['Remaining Girls',a.female-a.femaleTarget],['Remaining Total Target',a.total-a.totalTarget]];
- if(!window.jspdf || !window.jspdf.jsPDF){ alert('PDF library is still loading. Please wait a moment and try again.'); return; }
+ if(!window.jspdf || !window.jspdf.jsPDF){ alert('PDF library could not be loaded. Please refresh and try again.'); return; }
  const {jsPDF}=window.jspdf;
  const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
  const W=842,H=595,L=28,R=28,contentW=W-L-R;
