@@ -181,39 +181,25 @@ function totalRow(headers, data){
 }
 
 function exportPDF(){
- try{
-   const list=filtered();
-   if(!Array.isArray(list)) throw new Error('Filtered dashboard data is unavailable');
-   if(!window.jspdf || !window.jspdf.jsPDF) throw new Error('jsPDF library is not loaded');
-   const {jsPDF}=window.jspdf;
-   const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
-   const W=842,H=595,L=28,R=28,C=W-L-R;
-   const navy=[23,52,95],green=[22,128,92],red=[198,40,40],line=[213,222,232],muted=[82,101,122];
-   const fmt=v=>Number(v||0).toLocaleString('en-US');
-   const totals=list.reduce((z,r)=>{z.schools++;z.male+=Number(r.male)||0;z.female+=Number(r.female)||0;z.total+=Number(r.total)||0;z.maleTarget+=Number(r.maleTarget)||0;z.femaleTarget+=Number(r.femaleTarget)||0;z.totalTarget+=Number(r.totalTarget)||0;return z;},{schools:0,male:0,female:0,total:0,maleTarget:0,femaleTarget:0,totalTarget:0});
-   doc.setFillColor(255,255,255);doc.rect(0,0,W,H,'F');doc.setFillColor(23,52,95);doc.rect(0,0,W,5,'F');
-   doc.setFont('helvetica','bold');doc.setTextColor(23,52,95);doc.setFontSize(17);doc.text('Gender Wise Enrollment - District Okara',W/2,27,{align:'center'});
-   doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(82,101,122);doc.text('SIS Enrollment Monitoring Report',W/2,42,{align:'center'});
-   const cards=[['Schools',totals.schools],['Boys Enrollment',totals.male],['Target Boys',totals.maleTarget],['Remaining Boys',totals.male-totals.maleTarget],['Girls Enrollment',totals.female],['Target Girls',totals.femaleTarget],['Remaining Girls',totals.female-totals.femaleTarget],['Remaining Total',totals.total-totals.totalTarget]];
-   const gap=7,cw=(C-gap*7)/8;
-   cards.forEach((q,i)=>{const x=L+i*(cw+gap),v=Number(q[1]);doc.setFillColor(246,248,250);doc.setDrawColor(213,222,232);doc.roundedRect(x,65,cw,40,4,4,'FD');doc.setFontSize(7);doc.setTextColor(82,101,122);doc.text(q[0],x+cw/2,79,{align:'center'});doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(q[0].includes('Remaining')?(v<0?198:40:22),q[0].includes('Remaining')?(v<0?40:128:52),q[0].includes('Remaining')?(v<0?40:92:95));doc.text(fmt(v),x+cw/2,94,{align:'center'});});
-   let y=122;doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(23,52,95);doc.text('WING-WISE PERFORMANCE',L,y);y+=8;
-   const wing=aggregate(list,'wing');
-   const headers=['Wing','Schools','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement'];
-   const widths=[92,32,48,52,55,48,52,55,48,52,58,48],hh=22,rh=17;
-   doc.setFillColor(23,52,95);doc.rect(L,y,C,hh,'F');doc.setFont('helvetica','bold');doc.setFontSize(5.7);doc.setTextColor(255,255,255);
-   let xx=L;headers.forEach((h,k)=>{doc.text(h,xx+widths[k]/2,y+14,{align:'center',maxWidth:widths[k]-3});xx+=widths[k]});y+=hh;
-   wing.forEach((r,ri)=>{doc.setFillColor(ri%2?248:255,ri%2?250:255,ri%2?252:255);doc.rect(L,y,C,rh,'F');const vals=[r.name,r.schools,r.male,r.maleTarget,r.remainingBoys,r.female,r.femaleTarget,r.remainingGirls,r.total,r.totalTarget,r.remainingTotal,(Number(r.achievement)||0).toFixed(1)+'%'];xx=L;vals.forEach((v,k)=>{const h=headers[k],n=parseFloat(String(v).replace(/,/g,''));doc.setFont('helvetica',h==='Achievement'?'bold':'normal');doc.setFontSize(5.7);let tc=[35,45,58];if(h.includes('Remaining'))tc=n<0?red:green;if(h==='Achievement')tc=green;doc.setTextColor(tc[0],tc[1],tc[2]);doc.text(String(v),xx+widths[k]/2,y+11,{align:k?'center':'left',maxWidth:widths[k]-4});xx+=widths[k]});y+=rh;});
-   const overall=totals.totalTarget?totals.total/totals.totalTarget*100:0;
-   doc.setFillColor(232,240,235);doc.rect(L,y,C,rh,'F');doc.setFont('helvetica','bold');doc.setFontSize(6);doc.setTextColor(23,52,95);doc.text('TOTAL',L+4,y+11);doc.text(fmt(totals.schools),L+108,y+11,{align:'center'});doc.text(fmt(totals.male),L+164,y+11,{align:'center'});doc.text(fmt(totals.maleTarget),L+214,y+11,{align:'center'});doc.text(fmt(totals.female),L+350,y+11,{align:'center'});doc.text(overall.toFixed(1)+'%',L+C-24,y+11,{align:'center'});
-   y+=rh+12;doc.setFontSize(10);doc.text('KEY PERFORMANCE SUMMARY',L,y);y+=7;
-   const sum=[['Total Schools',fmt(totals.schools)],['Total Enrollment',fmt(totals.total)],['Total Target',fmt(totals.totalTarget)],['Overall Achievement',overall.toFixed(1)+'%'],['Target Gap',fmt(totals.total-totals.totalTarget)]],sw=(C-28)/5;
-   sum.forEach((q,i)=>{const x=L+i*(sw+7);doc.setFillColor(248,250,252);doc.setDrawColor(213,222,232);doc.roundedRect(x,y,sw,35,4,4,'FD');doc.setFontSize(7);doc.setTextColor(82,101,122);doc.text(q[0],x+sw/2,y+13,{align:'center'});doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(i===3?22: (i===4&&totals.total-totals.totalTarget<0?198:23),i===3?128:(i===4&&totals.total-totals.totalTarget<0?40:52),i===3?92:(i===4&&totals.total-totals.totalTarget<0?40:95));doc.text(q[1],x+sw/2,y+28,{align:'center'});});
-   doc.setDrawColor(213,222,232);doc.line(L,H-21,W-R,H-21);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(82,101,122);doc.text('District Okara Education Monitoring Report | SIS Data',L,H-10);doc.text('Page 1 of 1',W-R,H-10,{align:'right'});
-   doc.save('Gender_Wise_Enrollment_District_Okara.pdf');
- }catch(err){console.error('PDF export error:',err);alert('PDF generation failed. '+(err&&err.message?err.message:'Please try again.'));}
+  try {
+    if(!window.jspdf || !window.jspdf.jsPDF) { alert('PDF library is not loaded. Please refresh and try again.'); return; }
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
+    const list=typeof filtered==='function'?filtered():[];
+    const rows=list.map(r=>[r.name||'',r.schools||0,r.male||0,r.maleTarget||0,r.remainingBoys||0,r.female||0,r.femaleTarget||0,r.remainingGirls||0,r.total||0,r.totalTarget||0,r.remainingTotal||0]);
+    doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.text('Gender Wise Enrollment - District Okara',421,35,{align:'center'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text('SIS Enrollment Monitoring Report',421,51,{align:'center'});
+    doc.setFontSize(8); doc.text('Report Date / Time: '+new Date().toLocaleString('en-PK'),421,65,{align:'center'});
+    let y=85; const W=842,L=28;
+    doc.setFillColor(23,52,95); doc.rect(L,y,W-56,24,'F'); doc.setTextColor(255,255,255); doc.setFontSize(7);
+    doc.text('Wing / School',L+5,y+16); doc.text('Schools',150,y+16); doc.text('Boys',195,y+16); doc.text('Target',235,y+16); doc.text('Rem.',280,y+16); doc.text('Girls',325,y+16); doc.text('Target',365,y+16); doc.text('Rem.',410,y+16); doc.text('Total',455,y+16); doc.text('Target',500,y+16); doc.text('Rem.',550,y+16);
+    y+=24; doc.setTextColor(35,45,58); doc.setFontSize(7);
+    rows.slice(0,25).forEach((r,i)=>{if(i%2===0){doc.setFillColor(248,250,252);doc.rect(L,y,W-56,17,'F');} doc.text(String(r[0]).slice(0,24),L+5,y+11); [r[1],r[2],r[3],r[4],r[5],r[6],r[7],r[8],r[9],r[10]].forEach((v,k)=>doc.text(Number(v||0).toLocaleString(),150+k*45,y+11,{align:'center'})); y+=17;});
+    doc.setTextColor(82,101,122); doc.setFontSize(7); doc.text('District Okara Education Monitoring Report | SIS Data',L,580); doc.text('Page 1 of 1',814,580,{align:'right'});
+    doc.save('Gender_Wise_Enrollment_District_Okara.pdf');
+  } catch(err) { console.error(err); alert('PDF generation failed. '+(err.message||'Please try again.')); }
 }
-async async function loadLiveData(){
+async function loadLiveData(){
  try{
    const url='data/Okara_Latest_Enrollment_Gender_Latest.xlsx?ts='+Date.now();
    const resp=await fetch(url,{cache:'no-store'});
