@@ -213,7 +213,7 @@ function exportPDF(){
    doc.save('Gender_Wise_Enrollment_District_Okara.pdf');
  }catch(err){console.error('PDF export error:',err);alert('PDF generation failed. '+(err&&err.message?err.message:'Please try again.'));}
 }
-async function loadLiveData(){
+async async function loadLiveData(){
  try{
    const url='data/Okara_Latest_Enrollment_Gender_Latest.xlsx?ts='+Date.now();
    const resp=await fetch(url,{cache:'no-store'});
