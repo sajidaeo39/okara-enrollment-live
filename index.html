@@ -5,7 +5,6 @@
 <title>Okara Gender Target vs Latest Enrollment</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>:root{--blue:#0b5ed7;--dark:#17345f;--bg:#f4f7fb;--card:#fff;--line:#dfe5ee;--muted:#667085;--red:#c62828;--green:#16803c;--content:1180px;--control-h:38px}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -230,37 +229,34 @@ function exportPDF(){
  wingBody.push(wingTotal.map(v=>typeof v==='number'?fmt(v):String(v)));
 
  const wingStart=y;
- doc.autoTable({
-   head:[wingHeaders],body:wingBody,startY:wingStart,theme:'grid',
-   margin:{left:L,right:R},
-   styles:{font:'helvetica',fontSize:6.3,cellPadding:{top:2.7,right:2,bottom:2.7,left:2},lineColor:line,lineWidth:.3,halign:'center',valign:'middle',textColor:[35,45,58]},
-   headStyles:{fillColor:navy,textColor:[255,255,255],fontStyle:'bold',fontSize:6.4,halign:'center',cellPadding:{top:4,bottom:4,left:2,right:2}},
-   bodyStyles:{minCellHeight:16},
-   alternateRowStyles:{fillColor:[248,250,252]},
-   columnStyles:{0:{halign:'left',cellWidth:105},1:{cellWidth:38}},
-   didParseCell:function(d){
-     if(d.section==='body'){
-       if(d.row.index===wingBody.length-1){d.cell.styles.fillColor=[229,239,233];d.cell.styles.fontStyle='bold';}
-       const h=wingHeaders[d.column.index]||'';
-       if(h.includes('Remaining')){
-         const n=Number(String(d.cell.raw).replace(/,/g,''))||0;
-         if(n<0)d.cell.styles.textColor=red; else if(n>0)d.cell.styles.textColor=green;
-         d.cell.styles.fontStyle='bold';
-       }
-       if(h==='Achievement'){d.cell.styles.fontStyle='bold';}
-     }
-   },
-   didDrawCell:function(d){
-     if(d.section==='body' && wingHeaders[d.column.index]==='Achievement' && d.row.index<wingBody.length-1){
-       const pctVal=Math.max(0,Math.min(100,parseFloat(String(d.cell.raw))||0));
-       const x=d.cell.x+3,yb=d.cell.y+d.cell.height-4,w=d.cell.width-6;
-       doc.setFillColor(226,232,238);doc.roundedRect(x,yb,w,2,1,1,'F');
-       doc.setFillColor(pctVal>=100?green:red);doc.roundedRect(x,yb,w*pctVal/100,2,1,1,'F');
-     }
-   }
+ const colWidths=[92,32,48,52,55,48,52,55,48,52,58,48];
+ const rowH=17, headH=22;
+ let x0=L, yy=wingStart;
+ doc.setFillColor(...navy);doc.rect(L,yy,contentW,headH,'F');
+ doc.setFont('helvetica','bold');doc.setFontSize(5.7);doc.setTextColor(255,255,255);
+ wingHeaders.forEach((h,k)=>{doc.text(h,L+colWidths.slice(0,k).reduce((a,v)=>a+v,0)+colWidths[k]/2,yy+14,{align:'center',maxWidth:colWidths[k]-4});});
+ yy+=headH;
+ wingBody.forEach((row,ri)=>{
+   doc.setFillColor(...(ri===wingBody.length-1?[229,239,233]:ri%2?[248,250,252]:[255,255,255]));
+   doc.rect(L,yy,contentW,rowH,'F');
+   doc.setDrawColor(...line);doc.setLineWidth(.25);doc.line(L,yy+rowH,W-R,yy+rowH);
+   let xx=L;
+   row.forEach((v,k)=>{
+     const h=wingHeaders[k]||'';
+     let n=Number(String(v).replace(/,/g,'').replace('%',''));
+     let tc=[35,45,58];
+     if(h.includes('Remaining')) tc=(n<0?red:(n>0?green:tc));
+     if(h==='Achievement') tc=green;
+     doc.setFont('helvetica',ri===wingBody.length-1||h==='Achievement'?'bold':'normal');doc.setFontSize(5.7);doc.setTextColor(...tc);
+     const txt=String(v);
+     doc.text(txt,xx+colWidths[k]/2,yy+11,{align:k===0?'left':'center',maxWidth:colWidths[k]-4});
+     xx+=colWidths[k];
+   });
+   yy+=rowH;
  });
-
- let sy=doc.lastAutoTable.finalY+12;
+ doc.setDrawColor(...line);doc.rect(L,wingStart,contentW,headH+rowH*wingBody.length);
+ let sy=yy+10;
+let sy=doc.lastAutoTable.finalY+12;
  const summaryH=72;
  if(sy+summaryH>H-28)sy=H-28-summaryH;
  doc.setFont('helvetica','bold');doc.setFontSize(10.5);doc.setTextColor(...navy);doc.text('KEY PERFORMANCE SUMMARY',L,sy);
