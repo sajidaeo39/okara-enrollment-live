@@ -217,10 +217,10 @@ function exportPDF(){
  doc.setFillColor(...red);doc.circle(W-74,y-2,3,'F');doc.setTextColor(...muted);doc.text('Red = Target Not Achieved',W-68,y);
  y+=5;
 
- const wing=aggregate(list,'wing').sort((x,z)=>z.achievement-x.achievement);
+ const wing=(typeof aggregate==='function'?aggregate(list,'wing'):[]).sort((x,z)=>(z.achievement||0)-(x.achievement||0));
  const wingHeaders=['Wing','Schools','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement'];
  const wingBody=wing.map(r=>[r.name,r.schools,r.male,r.maleTarget,r.remainingBoys,r.female,r.femaleTarget,r.remainingGirls,r.total,r.totalTarget,r.remainingTotal,Math.round(r.achievement*10)/10+'%']);
- const wingTotal=totalRow(wingHeaders,wingBody);
+ const wingTotal=(typeof totalRow==='function'?totalRow(wingHeaders,wingBody):wingHeaders.map((h,k)=>k===0?'TOTAL':wing.reduce((n,r)=>n+(Number(r[Object.keys(r)[k]])||0),0)));
  const wAch=wingHeaders.findIndex(h=>h==='Achievement');
  const wTot=wingHeaders.findIndex(h=>h==='Total Enr.');
  const wTar=wingHeaders.findIndex(h=>h==='Total Target');
