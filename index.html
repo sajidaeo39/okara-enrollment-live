@@ -183,6 +183,7 @@ function totalRow(headers, data){
 function exportPDF(){
  const list=filtered();
  const a=list.reduce((z,r)=>{z.schools++;z.male+=r.male;z.female+=r.female;z.total+=r.total;z.maleTarget+=r.maleTarget;z.femaleTarget+=r.femaleTarget;z.totalTarget+=r.totalTarget;return z;},{schools:0,male:0,female:0,total:0,maleTarget:0,femaleTarget:0,totalTarget:0});
+ const pdfFmt=v=>Number(v||0).toLocaleString('en-US');
  const cards=[['Schools',a.schools],['Boys Enrollment',a.male],['Target Boys',a.maleTarget],['Remaining Boys',a.male-a.maleTarget],['Girls Enrollment',a.female],['Target Girls',a.femaleTarget],['Remaining Girls',a.female-a.femaleTarget],['Remaining Total Target',a.total-a.totalTarget]];
  if(!window.jspdf || !window.jspdf.jsPDF){ alert('PDF library could not be loaded. Please refresh and try again.'); return; }
  const {jsPDF}=window.jspdf;
@@ -217,10 +218,10 @@ function exportPDF(){
  doc.setFillColor(...red);doc.circle(W-74,y-2,3,'F');doc.setTextColor(...muted);doc.text('Red = Target Not Achieved',W-68,y);
  y+=5;
 
- const wing=(typeof aggregate==='function'?aggregate(list,'wing'):[]).sort((x,z)=>(z.achievement||0)-(x.achievement||0));
+ const wing=aggregate(list,'wing').sort((x,z)=>(z.achievement||0)-(x.achievement||0));
  const wingHeaders=['Wing','Schools','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement'];
  const wingBody=wing.map(r=>[r.name,r.schools,r.male,r.maleTarget,r.remainingBoys,r.female,r.femaleTarget,r.remainingGirls,r.total,r.totalTarget,r.remainingTotal,Math.round(r.achievement*10)/10+'%']);
- const wingTotal=(typeof totalRow==='function'?totalRow(wingHeaders,wingBody):wingHeaders.map((h,k)=>k===0?'TOTAL':wing.reduce((n,r)=>n+(Number(r[Object.keys(r)[k]])||0),0)));
+ const wingTotal=totalRow(wingHeaders,wingBody);
  const wAch=wingHeaders.findIndex(h=>h==='Achievement');
  const wTot=wingHeaders.findIndex(h=>h==='Total Enr.');
  const wTar=wingHeaders.findIndex(h=>h==='Total Target');
@@ -292,7 +293,7 @@ function exportPDF(){
  doc.text('District Okara Education Monitoring Report | SIS Data',L,H-10);
  doc.text('Generated: '+(reportDateTime||reportDate||new Date().toLocaleString('en-PK')),W/2,H-10,{align:'center'});
  doc.text('Page 1 of 1',W-R,H-10,{align:'right'});
- try { doc.save(reportSuffix()+'.pdf'); } catch(e) { console.error(e); alert('PDF could not be generated. Please refresh the dashboard and try again.'); }
+ try { doc.save((typeof reportSuffix==='function'?reportSuffix():'Okara_Enrollment_Monitoring_Report')+'.pdf'); } catch(e) { console.error(e); alert('PDF generation failed. Please try again.'); }
 }
 async function loadLiveData(){
  try{
