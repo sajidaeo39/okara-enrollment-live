@@ -180,6 +180,8 @@ function totalRow(headers, data){
  return row;
 }
 
+function pdfFmt(v){return Number(v||0).toLocaleString('en-US');}
+
 function exportPDF(){
  const list=filtered();
  const td=tableData();
@@ -207,7 +209,7 @@ function exportPDF(){
    doc.text(x[0],xp+cardW/2,cardY+13,{align:'center'});
    doc.setFont('helvetica','bold');doc.setFontSize(11);
    doc.setTextColor(x[0].includes('Remaining')?(val<0?red:green):navy);
-   doc.text(fmt(val),xp+cardW/2,cardY+29,{align:'center'});
+   doc.text(pdfFmt(val),xp+cardW/2,cardY+29,{align:'center'});
  });
 
  let y=115;
@@ -226,7 +228,7 @@ function exportPDF(){
  const wTot=wingHeaders.findIndex(h=>h==='Total Enr.');
  const wTar=wingHeaders.findIndex(h=>h==='Total Target');
  wingTotal[wAch]=wTar>=0&&Number(wingTotal[wTar])?((Number(wingTotal[wTot])/Number(wingTotal[wTar]))*100).toFixed(1)+'%':'0.0%';
- wingBody.push(wingTotal.map(v=>typeof v==='number'?fmt(v):String(v)));
+ wingBody.push(wingTotal.map(v=>typeof v==='number'?pdfFmt(v):String(v)));
 
  const wingStart=y;
  const colWidths=[92,32,48,52,55,48,52,55,48,52,58,48];
@@ -262,11 +264,11 @@ function exportPDF(){
  sy+=6;
  const sumGap=7,sumW=(contentW-sumGap*4)/5;
  const summary=[
-   ['Total Schools',fmt(a.schools),navy],
-   ['Total Enrollment',fmt(a.total),navy],
-   ['Total Target',fmt(a.totalTarget),navy],
+   ['Total Schools',pdfFmt(a.schools),navy],
+   ['Total Enrollment',pdfFmt(a.total),navy],
+   ['Total Target',pdfFmt(a.totalTarget),navy],
    ['Overall Achievement',a.totalTarget?(a.total/a.totalTarget*100).toFixed(1)+'%':'0.0%',green],
-   ['Target Gap',fmt(a.total-a.totalTarget),(a.total-a.totalTarget)<0?red:green]
+   ['Target Gap',pdfFmt(a.total-a.totalTarget),(a.total-a.totalTarget)<0?red:green]
  ];
  summary.forEach((x,i)=>{
    const xp=L+i*(sumW+sumGap);
