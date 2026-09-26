@@ -256,7 +256,6 @@ function exportPDF(){
  });
  doc.setDrawColor(...line);doc.rect(L,wingStart,contentW,headH+rowH*wingBody.length);
  let sy=yy+10;
-let sy=doc.lastAutoTable.finalY+12;
  const summaryH=72;
  if(sy+summaryH>H-28)sy=H-28-summaryH;
  doc.setFont('helvetica','bold');doc.setFontSize(10.5);doc.setTextColor(...navy);doc.text('KEY PERFORMANCE SUMMARY',L,sy);
