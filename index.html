@@ -182,28 +182,121 @@ function totalRow(headers, data){
 }
 
 function exportPDF(){
- const td=tableData(),list=filtered();
+ const list=filtered();
+ const td=tableData();
  const a=list.reduce((z,r)=>{z.schools++;z.male+=r.male;z.female+=r.female;z.total+=r.total;z.maleTarget+=r.maleTarget;z.femaleTarget+=r.femaleTarget;z.totalTarget+=r.totalTarget;return z;},{schools:0,male:0,female:0,total:0,maleTarget:0,femaleTarget:0,totalTarget:0});
  const cards=[['Schools',a.schools],['Boys Enrollment',a.male],['Target Boys',a.maleTarget],['Remaining Boys',a.male-a.maleTarget],['Girls Enrollment',a.female],['Target Girls',a.femaleTarget],['Remaining Girls',a.female-a.femaleTarget],['Remaining Total Target',a.total-a.totalTarget]];
- const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
- doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(23,52,95);doc.text('Gender wise enrollment District Okara',421,28,{align:'center'});
- doc.setFontSize(11);doc.setTextColor(82,101,122);doc.text('Dashboard developed by M.Sajid AEO Markaz Amli Moti (W)',421,45,{align:'center'});
- doc.setFont('helvetica','normal');doc.text('Latest SIS report: '+(reportDateTime||reportDate||'N/A'),421,61,{align:'center'});
- const cardW=88,cardH=42,gap=8,startX=(842-(cardW*8+gap*7))/2;
- cards.forEach((x,i)=>{const xp=startX+i*(cardW+gap);doc.setFillColor(244,247,251);doc.setDrawColor(210,220,232);doc.roundedRect(xp,72,cardW,cardH,5,5,'FD');doc.setFontSize(9);doc.setTextColor(82,101,122);doc.text(x[0],xp+cardW/2,88,{align:'center'});doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(23,52,95);doc.text(fmt(x[1]),xp+cardW/2,106,{align:'center'});doc.setFont('helvetica','normal');});
- doc.setFontSize(9);doc.setTextColor(82,101,122);doc.text('Performance rule: Green = On Target • Red = Target Not achieved',28,130);
- let startY=165;
- doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(23,52,95);doc.text(reportLabel()+' Report',28,startY);
- startY+=10;
- const pdfBody=td.data.map(r=>r.map(v=>typeof v==='number'?fmt(v):String(v))); const tr=totalRow(td.headers,td.data); const achIdx=td.headers.findIndex(h=>String(h).toLowerCase()==='achievement'); if(achIdx>=0){const total=tr[td.headers.findIndex(h=>String(h).toLowerCase()==='total enr.')];const target=tr[td.headers.findIndex(h=>String(h).toLowerCase()==='total target')];tr[achIdx]=target?((total/target)*100).toFixed(1)+'%':'0.0%';} pdfBody.push(tr.map(v=>typeof v==='number'?fmt(v):String(v)));
- doc.autoTable({head:[td.headers],body:pdfBody,startY:startY,theme:'grid',
- styles:{font:'helvetica',fontSize:9,cellPadding:{top:5,right:3,bottom:5,left:3},overflow:'linebreak',valign:'middle',halign:'center',lineColor:[210,220,232],lineWidth:.35},
- headStyles:{fontSize:9,fontStyle:'bold',fillColor:[214,229,244],textColor:[23,52,95],halign:'center',valign:'middle',cellPadding:6},
- bodyStyles:{fontSize:9,minCellHeight:25,halign:'center',valign:'middle'},
- columnStyles:{0:{cellWidth:112},1:{cellWidth:48},2:{cellWidth:60},3:{cellWidth:60},4:{cellWidth:58}},
- margin:{left:28,right:28,top:10,bottom:24},
- didParseCell:function(data){if(data.section==='body' && data.column.index===0){data.cell.styles.halign='left';} if(data.section==='body' && data.row.index===pdfBody.length-1){data.cell.styles.fontStyle='bold';data.cell.styles.fillColor=[226,240,230];data.cell.styles.textColor=[23,52,95];}}
+ const {jsPDF}=window.jspdf;
+ const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
+ const W=842,H=595,L=28,R=28,contentW=W-L-R;
+ const navy=[23,52,95],blue=[49,91,125],light=[244,247,251],line=[213,222,232],green=[22,128,92],red=[198,40,40],muted=[82,101,122];
+ doc.setFillColor(255,255,255);doc.rect(0,0,W,H,'F');
+ doc.setFillColor(...navy);doc.rect(0,0,W,5,'F');
+ doc.setFont('helvetica','bold');doc.setTextColor(...navy);doc.setFontSize(17);
+ doc.text('Gender Wise Enrollment — District Okara',W/2,27,{align:'center'});
+ doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(...blue);
+ doc.text('SIS Enrollment Monitoring Report',W/2,42,{align:'center'});
+ doc.setFontSize(8.5);doc.setTextColor(...muted);
+ doc.text('Report Date / Time: '+(reportDateTime||reportDate||'N/A'),W/2,55,{align:'center'});
+
+ const cardGap=7,cardW=(contentW-cardGap*7)/8,cardH=40,cardY=65;
+ cards.forEach((x,i)=>{
+   const xp=L+i*(cardW+cardGap), val=Number(x[1]||0);
+   doc.setFillColor(...light);doc.setDrawColor(...line);doc.roundedRect(xp,cardY,cardW,cardH,4,4,'FD');
+   doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...muted);
+   doc.text(x[0],xp+cardW/2,cardY+13,{align:'center'});
+   doc.setFont('helvetica','bold');doc.setFontSize(11);
+   doc.setTextColor(x[0].includes('Remaining')?(val<0?red:green):navy);
+   doc.text(fmt(val),xp+cardW/2,cardY+29,{align:'center'});
  });
+
+ let y=115;
+ doc.setFont('helvetica','bold');doc.setFontSize(10.5);doc.setTextColor(...navy);
+ doc.text('WING-WISE PERFORMANCE',L,y);
+ doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...muted);
+ doc.text('Green = On Target',W-145,y);doc.setFillColor(...green);doc.circle(W-151,y-2,3,'F');
+ doc.setFillColor(...red);doc.circle(W-74,y-2,3,'F');doc.setTextColor(...muted);doc.text('Red = Target Not Achieved',W-68,y);
+ y+=5;
+
+ const wing=aggregate(list,'wing').sort((x,z)=>z.achievement-x.achievement);
+ const wingHeaders=['Wing','Schools','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement'];
+ const wingBody=wing.map(r=>[r.name,r.schools,r.male,r.maleTarget,r.remainingBoys,r.female,r.femaleTarget,r.remainingGirls,r.total,r.totalTarget,r.remainingTotal,Math.round(r.achievement*10)/10+'%']);
+ const wingTotal=totalRow(wingHeaders,wingBody);
+ const wAch=wingHeaders.findIndex(h=>h==='Achievement');
+ const wTot=wingHeaders.findIndex(h=>h==='Total Enr.');
+ const wTar=wingHeaders.findIndex(h=>h==='Total Target');
+ wingTotal[wAch]=wTar>=0&&Number(wingTotal[wTar])?((Number(wingTotal[wTot])/Number(wingTotal[wTar]))*100).toFixed(1)+'%':'0.0%';
+ wingBody.push(wingTotal.map(v=>typeof v==='number'?fmt(v):String(v)));
+
+ const wingStart=y;
+ doc.autoTable({
+   head:[wingHeaders],body:wingBody,startY:wingStart,theme:'grid',
+   margin:{left:L,right:R},
+   styles:{font:'helvetica',fontSize:6.3,cellPadding:{top:2.7,right:2,bottom:2.7,left:2},lineColor:line,lineWidth:.3,halign:'center',valign:'middle',textColor:[35,45,58]},
+   headStyles:{fillColor:navy,textColor:[255,255,255],fontStyle:'bold',fontSize:6.4,halign:'center',cellPadding:{top:4,bottom:4,left:2,right:2}},
+   bodyStyles:{minCellHeight:16},
+   alternateRowStyles:{fillColor:[248,250,252]},
+   columnStyles:{0:{halign:'left',cellWidth:105},1:{cellWidth:38}},
+   didParseCell:function(d){
+     if(d.section==='body'){
+       if(d.row.index===wingBody.length-1){d.cell.styles.fillColor=[229,239,233];d.cell.styles.fontStyle='bold';}
+       const h=wingHeaders[d.column.index]||'';
+       if(h.includes('Remaining')){
+         const n=Number(String(d.cell.raw).replace(/,/g,''))||0;
+         if(n<0)d.cell.styles.textColor=red; else if(n>0)d.cell.styles.textColor=green;
+         d.cell.styles.fontStyle='bold';
+       }
+       if(h==='Achievement'){d.cell.styles.fontStyle='bold';}
+     }
+   },
+   didDrawCell:function(d){
+     if(d.section==='body' && wingHeaders[d.column.index]==='Achievement' && d.row.index<wingBody.length-1){
+       const pctVal=Math.max(0,Math.min(100,parseFloat(String(d.cell.raw))||0));
+       const x=d.cell.x+3,yb=d.cell.y+d.cell.height-4,w=d.cell.width-6;
+       doc.setFillColor(226,232,238);doc.roundedRect(x,yb,w,2,1,1,'F');
+       doc.setFillColor(pctVal>=100?green:red);doc.roundedRect(x,yb,w*pctVal/100,2,1,1,'F');
+     }
+   }
+ });
+
+ let sy=doc.lastAutoTable.finalY+12;
+ const summaryH=72;
+ if(sy+summaryH>H-28)sy=H-28-summaryH;
+ doc.setFont('helvetica','bold');doc.setFontSize(10.5);doc.setTextColor(...navy);doc.text('KEY PERFORMANCE SUMMARY',L,sy);
+ sy+=6;
+ const sumGap=7,sumW=(contentW-sumGap*4)/5;
+ const summary=[
+   ['Total Schools',fmt(a.schools),navy],
+   ['Total Enrollment',fmt(a.total),navy],
+   ['Total Target',fmt(a.totalTarget),navy],
+   ['Overall Achievement',a.totalTarget?(a.total/a.totalTarget*100).toFixed(1)+'%':'0.0%',green],
+   ['Target Gap',fmt(a.total-a.totalTarget),(a.total-a.totalTarget)<0?red:green]
+ ];
+ summary.forEach((x,i)=>{
+   const xp=L+i*(sumW+sumGap);
+   doc.setFillColor(248,250,252);doc.setDrawColor(...line);doc.roundedRect(xp,sy+2,sumW,35,4,4,'FD');
+   doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...muted);doc.text(x[0],xp+sumW/2,sy+14,{align:'center'});
+   doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...x[2]);doc.text(x[1],xp+sumW/2,sy+29,{align:'center'});
+ });
+
+ sy+=47;
+ doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...navy);doc.text('WING ACHIEVEMENT',L,sy);
+ sy+=7;
+ const barGap=8,barW=(contentW-barGap*(Math.max(1,wing.length)-1))/Math.max(1,wing.length),barH=15;
+ wing.forEach((r,i)=>{
+   const xp=L+i*(barW+barGap),p=Math.max(0,Math.min(100,r.achievement||0));
+   doc.setFillColor(238,242,246);doc.roundedRect(xp,sy,barW,barH,3,3,'F');
+   doc.setFillColor(p>=100?green:red);doc.roundedRect(xp,sy,barW*p/100,barH,3,3,'F');
+   doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(255,255,255);
+   if(p>18)doc.text(r.name+'  '+p.toFixed(1)+'%',xp+barW/2,sy+10,{align:'center'});
+   else{doc.setTextColor(...navy);doc.text(r.name+'  '+p.toFixed(1)+'%',xp+barW/2,sy+10,{align:'center'});}
+ });
+
+ doc.setDrawColor(...line);doc.line(L,H-21,W-R,H-21);
+ doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...muted);
+ doc.text('District Okara Education Monitoring Report | SIS Data',L,H-10);
+ doc.text('Generated: '+(reportDateTime||reportDate||new Date().toLocaleString('en-PK')),W/2,H-10,{align:'center'});
+ doc.text('Page 1 of 1',W-R,H-10,{align:'right'});
  doc.save(reportSuffix()+'.pdf');
 }
 async function loadLiveData(){
