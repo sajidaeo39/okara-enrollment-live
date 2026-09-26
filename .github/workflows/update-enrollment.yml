@@ -2,8 +2,12 @@ name: Update Okara Enrollment
 
 on:
   schedule:
-    # 02:00 UTC = 07:00 Pakistan Standard Time (UTC+5)
-    - cron: "0 2 * * *"
+    # First attempt: 06:55 Pakistan time (avoids the busy top-of-hour trigger)
+    - cron: "55 6 * * *"
+      timezone: "Asia/Karachi"
+    # Backup attempt: 07:10 Pakistan time if the first scheduled run is delayed or SIS is not ready
+    - cron: "10 7 * * *"
+      timezone: "Asia/Karachi"
   workflow_dispatch:
 
 permissions:
