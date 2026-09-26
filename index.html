@@ -180,11 +180,10 @@ function totalRow(headers, data){
  return row;
 }
 
-function pdfFmt(v){return Number(v||0).toLocaleString('en-US');}
-
 function exportPDF(){
  const list=filtered();
- const td=tableData();
+ const td=tableData(function exportPDF(){
+ const list=filtered();
  const a=list.reduce((z,r)=>{z.schools++;z.male+=r.male;z.female+=r.female;z.total+=r.total;z.maleTarget+=r.maleTarget;z.femaleTarget+=r.femaleTarget;z.totalTarget+=r.totalTarget;return z;},{schools:0,male:0,female:0,total:0,maleTarget:0,femaleTarget:0,totalTarget:0});
  const cards=[['Schools',a.schools],['Boys Enrollment',a.male],['Target Boys',a.maleTarget],['Remaining Boys',a.male-a.maleTarget],['Girls Enrollment',a.female],['Target Girls',a.femaleTarget],['Remaining Girls',a.female-a.femaleTarget],['Remaining Total Target',a.total-a.totalTarget]];
  if(!window.jspdf || !window.jspdf.jsPDF){ alert('PDF library could not be loaded. Please refresh and try again.'); return; }
@@ -297,8 +296,7 @@ function exportPDF(){
  doc.text('Page 1 of 1',W-R,H-10,{align:'right'});
  try { doc.save(reportSuffix()+'.pdf'); } catch(e) { console.error(e); alert('PDF could not be generated. Please refresh the dashboard and try again.'); }
 }
-async function loadLiveData(){
- const status={set textContent(v){},set style(v){}};
+,set style(v){}};
  try{
    const url='data/Okara_Latest_Enrollment_Gender_Latest.xlsx?ts='+Date.now();
    const resp=await fetch(url,{cache:'no-store'});
