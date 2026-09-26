@@ -180,7 +180,7 @@ function totalRow(headers, data){
  return row;
 }
 
-async function exportPDF(){
+function exportPDF(){
  try{
    const list=filtered();
    if(!Array.isArray(list)) throw new Error('Filtered dashboard data is unavailable');
