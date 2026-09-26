@@ -182,8 +182,6 @@ function totalRow(headers, data){
 
 function exportPDF(){
  const list=filtered();
- const td=tableData(function exportPDF(){
- const list=filtered();
  const a=list.reduce((z,r)=>{z.schools++;z.male+=r.male;z.female+=r.female;z.total+=r.total;z.maleTarget+=r.maleTarget;z.femaleTarget+=r.femaleTarget;z.totalTarget+=r.totalTarget;return z;},{schools:0,male:0,female:0,total:0,maleTarget:0,femaleTarget:0,totalTarget:0});
  const cards=[['Schools',a.schools],['Boys Enrollment',a.male],['Target Boys',a.maleTarget],['Remaining Boys',a.male-a.maleTarget],['Girls Enrollment',a.female],['Target Girls',a.femaleTarget],['Remaining Girls',a.female-a.femaleTarget],['Remaining Total Target',a.total-a.totalTarget]];
  if(!window.jspdf || !window.jspdf.jsPDF){ alert('PDF library could not be loaded. Please refresh and try again.'); return; }
