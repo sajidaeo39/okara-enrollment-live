@@ -198,42 +198,62 @@ function exportPDF(){
     if(currentView==='last10markaz') dataRows=dataRows.slice(-10);
     if(currentView==='lowSchools') dataRows=dataRows.sort((a,b)=>a.achievement-b.achievement).slice(0,Math.max(1,Math.min(50,Number(document.getElementById('lowCount')?.value||50))));
     const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
-    const W=842,H=595,M=28,C=W-2*M,navy=[25,50,88],light=[244,247,250],line=[214,221,230],green=[31,130,86],red=[190,48,48],textc=[45,55,68],muted=[92,105,122];
-    const palette=[[48,84,135],[31,130,86],[205,119,34],[125,85,165],[32,145,160],[190,65,75],[90,115,145],[150,115,70]];
+    const W=842,H=595,M=28,C=W-2*M,navy=[25,50,88],light=[244,247,250],line=[185,195,208],green=[31,130,86],red=[190,48,48],yellow=[226,177,35],textc=[45,55,68],muted=[92,105,122];
     const fmt=v=>Number(v||0).toLocaleString('en-US');
     const ach=sum.totalTarget?sum.total/sum.totalTarget*100:0,remaining=sum.total-sum.totalTarget;
     const headers=[isSchool?'School':groupField==='markaz'?'Markaz':groupField==='tehsil'?'Tehsil':'Wing','Schools','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement'];
     const widths=[0.19,0.055,0.075,0.075,0.08,0.075,0.075,0.08,0.075,0.08,0.08,0.06].map(v=>v*C);
     const tableW=widths.reduce((a,b)=>a+b,0);
     const totalCells=[sum.schools,sum.male,sum.maleTarget,sum.male-sum.maleTarget,sum.female,sum.femaleTarget,sum.female-sum.femaleTarget,sum.total,sum.totalTarget,remaining,ach.toFixed(1)+'%'];
-    const footer=page=>{doc.setDrawColor(...line);doc.line(M,H-25,W-M,H-25);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...muted);doc.text('Dashboard developed by M.Sajid AEO Markaz Amli Moti (W)',W/2,H-12,{align:'center'});doc.text('Page '+page,M,H-12);};
+    const footer=page=>{doc.setDrawColor(...line);doc.setLineWidth(.7);doc.line(M,H-25,W-M,H-25);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...muted);doc.text('Dashboard developed by M.Sajid AEO Markaz Amli Moti (W)',W/2,H-12,{align:'center'});doc.text('Page '+page,M,H-12);};
     const drawTop=()=>{
       doc.setFillColor(255,255,255);doc.rect(0,0,W,H,'F');doc.setFillColor(...navy);doc.rect(0,0,W,6,'F');
-      doc.setFont('helvetica','bold');doc.setTextColor(...navy);doc.setFontSize(18);doc.text('Latest SIS Enrollment',W/2,32,{align:'center'});
-      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...muted);doc.text('Report Date / Time: '+(typeof reportDateTime!=='undefined'&&reportDateTime?reportDateTime:new Date().toLocaleString('en-PK')),W/2,48,{align:'center'});
+      doc.setFont('helvetica','bold');doc.setTextColor(...navy);doc.setFontSize(18);doc.text('Latest SIS Enrollment',W/2,36,{align:'center'});
+      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...muted);doc.text('Report Date / Time: '+(typeof reportDateTime!=='undefined'&&reportDateTime?reportDateTime:new Date().toLocaleString('en-PK')),W/2,53,{align:'center'});
     };
     const drawCards=()=>{
       const cards=[['Schools',sum.schools],['Boys Enrollment',sum.male],['Target Boys',sum.maleTarget],['Remaining Boys',sum.male-sum.maleTarget],['Girls Enrollment',sum.female],['Target Girls',sum.femaleTarget],['Remaining Girls',sum.female-sum.femaleTarget],['Remaining Total Target',remaining]];
-      const gap=8,cw=(C-gap*7)/8,cy=61,ch=47;
-      cards.forEach((q,i)=>{const x=M+i*(cw+gap),v=Number(q[1]);doc.setFillColor(...light);doc.setDrawColor(...line);doc.roundedRect(x,cy,cw,ch,4,4,'FD');doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...muted);doc.text(q[0],x+cw/2,cy+15,{align:'center',maxWidth:cw-6});doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...(q[0].includes('Remaining')?(v<0?red:green):navy));doc.text(fmt(v),x+cw/2,cy+34,{align:'center'});});
+      const gap=9,cw=(C-gap*7)/8,cy=72,ch=50;
+      cards.forEach((q,i)=>{const x=M+i*(cw+gap),v=Number(q[1]);doc.setFillColor(...light);doc.setDrawColor(...line);doc.setLineWidth(.8);doc.roundedRect(x,cy,cw,ch,4,4,'FD');doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...muted);doc.text(q[0],x+cw/2,cy+16,{align:'center',maxWidth:cw-8});doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...(q[0].includes('Remaining')?(v<0?red:green):navy));doc.text(fmt(v),x+cw/2,cy+37,{align:'center'});});
     };
     const drawTableHeading=(y)=>{
       doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...navy);doc.text(groupLabel+' PERFORMANCE',W/2,y,{align:'center'});
-      doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...green);doc.text('Green = On Target',W/2-90,y+13,{align:'center'});doc.setTextColor(...red);doc.text('Red = Target Not Achieved',W/2+75,y+13,{align:'center'});
-      y+=23;doc.setFillColor(...navy);doc.rect(M,y,tableW,23,'F');doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(255,255,255);let x=M;
-      headers.forEach((h,k)=>{doc.text(h,x+widths[k]/2,y+15,{align:'center',maxWidth:widths[k]-4});x+=widths[k];});return y+23;
+      doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...green);doc.text('Green = On Target',W/2-90,y+14,{align:'center'});doc.setTextColor(...red);doc.text('Red = Target Not Achieved',W/2+75,y+14,{align:'center'});
+      y+=25;doc.setFillColor(...navy);doc.setDrawColor(...navy);doc.setLineWidth(.8);doc.rect(M,y,tableW,25,'FD');doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(255,255,255);let x=M;
+      headers.forEach((h,k)=>{doc.text(h,x+widths[k]/2,y+16,{align:'center',maxWidth:widths[k]-4});x+=widths[k];});
+      x=M;headers.forEach((h,k)=>{doc.setDrawColor(255,255,255);doc.rect(x,y,widths[k],25,'S');x+=widths[k];});
+      return y+25;
     };
-    let page=1;drawTop();drawCards();let y=drawTableHeading(123);const rowH=21;
+    let page=1;drawTop();drawCards();let y=drawTableHeading(148);const rowH=23;
     const drawRow=(r,i)=>{
-      doc.setFillColor(...(i%2?[255,255,255]:[247,249,252]));doc.rect(M,y,tableW,rowH,'F');let vals=[r.name??r.school??'',r.schools??1,r.male,r.maleTarget,r.remainingBoys??(r.male-r.maleTarget),r.female,r.femaleTarget,r.remainingGirls??(r.female-r.femaleTarget),r.total,r.totalTarget,r.remainingTotal??(r.total-r.totalTarget),(Number(r.achievement)||0).toFixed(1)+'%'];
-      let x=M;vals.forEach((v,k)=>{const h=headers[k],n=Number(v);doc.setFont('helvetica',k===11?'bold':'normal');doc.setFontSize(6.5);doc.setTextColor(...(h.includes('Remaining')?(n<0?red:green):k===11?((Number(r.achievement)||0)>=100?green:red):textc));doc.text(String(k===0?v:typeof v==='number'?fmt(v):v),k===0?x+5:x+widths[k]/2,y+14,{align:k===0?'left':'center',maxWidth:widths[k]-7});x+=widths[k];});y+=rowH;
+      doc.setFillColor(...(i%2?[255,255,255]:[247,249,252]));doc.setDrawColor(...line);doc.setLineWidth(.6);doc.rect(M,y,tableW,rowH,'FD');
+      let vals=[r.name??r.school??'',r.schools??1,r.male,r.maleTarget,r.remainingBoys??(r.male-r.maleTarget),r.female,r.femaleTarget,r.remainingGirls??(r.female-r.femaleTarget),r.total,r.totalTarget,r.remainingTotal??(r.total-r.totalTarget),(Number(r.achievement)||0).toFixed(1)+'%'];
+      let x=M;vals.forEach((v,k)=>{const h=headers[k],n=Number(v);doc.setFont('helvetica',k===11?'bold':'normal');doc.setFontSize(6.5);doc.setTextColor(...(h.includes('Remaining')?(n<0?red:green):k===11?((Number(r.achievement)||0)>=100?green:red):textc));doc.text(String(k===0?v:typeof v==='number'?fmt(v):v),k===0?x+5:x+widths[k]/2,y+15,{align:k===0?'left':'center',maxWidth:widths[k]-7});x+=widths[k];});
+      x=M;headers.forEach((h,k)=>{doc.setDrawColor(...line);doc.setLineWidth(.45);doc.rect(x,y,widths[k],rowH,'S');x+=widths[k];});
+      y+=rowH;
     };
-    dataRows.forEach((r,i)=>{if(y+rowH>H-48){footer(page);doc.addPage();page++;drawTop();y=drawTableHeading(75);}drawRow(r,i);});
-    if(y+rowH+8<=H-48){doc.setFillColor(232,238,245);doc.rect(M,y,tableW,rowH,'F');doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(...navy);doc.text('TOTAL',M+5,y+14);let x=M+widths[0];totalCells.forEach((v,k)=>{const col=k+1;doc.setTextColor(...((col===4||col===7||col===10)?(Number(v)<0?red:green):col===11?green:navy));doc.text(String(typeof v==='number'?fmt(v):v),x+widths[col]/2,y+14,{align:'center'});x+=widths[col];});y+=rowH+16;}
+    dataRows.forEach((r,i)=>{if(y+rowH>H-48){footer(page);doc.addPage();page++;drawTop();y=drawTableHeading(82);}drawRow(r,i);});
+    if(y+rowH+8<=H-48){
+      doc.setFillColor(232,238,245);doc.setDrawColor(...line);doc.setLineWidth(.7);doc.rect(M,y,tableW,rowH,'FD');doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(...navy);doc.text('TOTAL',M+5,y+15);
+      let x=M+widths[0];totalCells.forEach((v,k)=>{const col=k+1;doc.setTextColor(...((col===4||col===7||col===10)?(Number(v)<0?red:green):col===11?green:navy));doc.text(String(typeof v==='number'?fmt(v):v),x+widths[col]/2,y+15,{align:'center'});doc.setDrawColor(...line);doc.rect(x,y,widths[col],rowH,'S');x+=widths[col];});
+      doc.setDrawColor(...line);doc.rect(M,y,widths[0],rowH,'S');y+=rowH+20;
+    }
     if(currentView==='wing'||currentView==='tehsil'){
-      if(y+80>H-48){footer(page);doc.addPage();page++;drawTop();y=78;}
-      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...navy);doc.text(groupLabel+' ACHIEVEMENT',M,y);y+=12;
-      dataRows.forEach((r,i)=>{if(y+18>H-48){footer(page);doc.addPage();page++;drawTop();y=70;}const pctv=Number(r.achievement)||0;doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...textc);doc.text(String(r.name).slice(0,34),M,y+9,{maxWidth:120});doc.setFillColor(235,239,244);doc.roundedRect(M+135,y,Math.max(20,C-205),11,3,3,'F');const bw=Math.max(2,Math.min(C-205,(C-205)*pctv/100));doc.setFillColor(...palette[i%palette.length]);doc.roundedRect(M+135,y,bw,11,3,3,'F');doc.setFont('helvetica','bold');doc.setTextColor(...(pctv>=100?green:red));doc.text(pctv.toFixed(1)+'%',W-M-5,y+9,{align:'right'});y+=19;});
+      if(y+90>H-48){footer(page);doc.addPage();page++;drawTop();y=82;}
+      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...navy);doc.text(groupLabel+' ACHIEVEMENT',M,y);y+=18;
+      const maxAch=dataRows.length?Math.max(...dataRows.map(r=>Number(r.achievement)||0)):0;
+      const minAch=dataRows.length?Math.min(...dataRows.map(r=>Number(r.achievement)||0)):0;
+      dataRows.forEach((r,i)=>{
+        if(y+20>H-48){footer(page);doc.addPage();page++;drawTop();y=82;}
+        const pctv=Number(r.achievement)||0;
+        const barColor=pctv===maxAch?green:(pctv===minAch?red:yellow);
+        doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...textc);doc.text(String(r.name).slice(0,34),M,y+10,{maxWidth:120});
+        const trackW=C-205;doc.setFillColor(235,239,244);doc.setDrawColor(...line);doc.roundedRect(M+135,y,trackW,12,3,3,'FD');
+        const bw=Math.max(2,Math.min(trackW,trackW*pctv/100));doc.setFillColor(...barColor);doc.setDrawColor(...barColor);doc.roundedRect(M+135,y,bw,12,3,3,'F');
+        doc.setFont('helvetica','bold');doc.setTextColor(...(pctv>=100?green:red));doc.text(pctv.toFixed(1)+'%',W-M-5,y+10,{align:'right'});
+        y+=20;
+      });
+      doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...green);doc.text('Green = Highest',M,y+2);doc.setTextColor(...yellow);doc.text('Yellow = Middle',M+75,y+2);doc.setTextColor(...red);doc.text('Red = Lowest',M+155,y+2);y+=12;
     }
     footer(page);
     doc.save('Latest_SIS_Enrollment_'+reportSuffix()+'.pdf');
