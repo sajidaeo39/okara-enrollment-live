@@ -190,7 +190,10 @@ function exportPDF(){
       z.maleTarget+=Number(r.maleTarget)||0; z.femaleTarget+=Number(r.femaleTarget)||0; z.totalTarget+=Number(r.totalTarget)||0;
       return z;
     },{schools:0,male:0,female:0,total:0,maleTarget:0,femaleTarget:0,totalTarget:0});
-    const wing=typeof aggregate==='function'?aggregate(list,'wing'):[];
+    const groupField=(currentView==='markaz'||currentView==='top10markaz'||currentView==='last10markaz')?'markaz':(currentView==='tehsil'?'tehsil':(currentView==='school'||currentView==='lowSchools'?'school':'wing'));
+    const groupLabel=groupField==='markaz'?'MARKAZ-WISE':groupField==='tehsil'?'TEHSIL-WISE':groupField==='school'?'SCHOOL-WISE':'WING-WISE';
+    const groupRows=typeof aggregate==='function'?aggregate(list,groupField).sort((a,b)=>b.achievement-a.achievement):[];
+    const displayRows=(currentView==='top10markaz'?groupRows.slice(0,10):(currentView==='last10markaz'?groupRows.slice(-10):groupRows));
     const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
     const W=842,H=595,M=28,C=W-M*2,navy=[25,50,88],blue=[48,84,135],light=[244,247,250],line=[214,221,230],green=[31,130,86],red=[190,48,48],textc=[45,55,68],muted=[92,105,122];
     const fmt=v=>Number(v||0).toLocaleString('en-US');
@@ -219,16 +222,16 @@ function exportPDF(){
     });
 
     let y=124;
-    doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...navy);doc.text('WING-WISE PERFORMANCE',M,y);
+    doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...navy);doc.text(groupLabel+' PERFORMANCE',M,y);
     doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(...green);doc.text('Green = On Target',M+145,y);
     doc.setTextColor(...red);doc.text('Red = Target Not Achieved',M+225,y);
     y+=7;
-    const headers=['Wing','Schools','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement'];
+    const headers=[groupField==='school'?'School':groupField==='markaz'?'Markaz':groupField==='tehsil'?'Tehsil':'Wing','Schools','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement'];
     const widths=[100,40,50,52,58,50,52,58,50,55,60,55];
     const tableW=widths.reduce((a,v)=>a+v,0),th=20,rh=15;
     doc.setFillColor(...navy);doc.rect(M,y,tableW,th,'F');doc.setFont('helvetica','bold');doc.setFontSize(5.8);doc.setTextColor(255,255,255);
     let x=M;headers.forEach((h,k)=>{doc.text(h,x+widths[k]/2,y+13,{align:'center',maxWidth:widths[k]-3});x+=widths[k]});y+=th;
-    wing.forEach((r,i)=>{
+    displayRows.forEach((r,i)=>{
       doc.setFillColor(...(i%2?[255,255,255]:[247,249,252]));doc.rect(M,y,tableW,rh,'F');
       const vals=[r.name,r.schools,r.male,r.maleTarget,r.remainingBoys,r.female,r.femaleTarget,r.remainingGirls,r.total,r.totalTarget,r.remainingTotal,(Number(r.achievement)||0).toFixed(1)+'%'];
       x=M;vals.forEach((v,k)=>{
@@ -248,14 +251,14 @@ function exportPDF(){
     const sg=7,sw=(C-sg*4)/5,sh=31;
     summary.forEach((q,i)=>{const xx=M+i*(sw+sg);doc.setFillColor(...light);doc.setDrawColor(...line);doc.roundedRect(xx,y,sw,sh,4,4,'FD');doc.setFont('helvetica','normal');doc.setFontSize(6.2);doc.setTextColor(...muted);doc.text(q[0],xx+sw/2,y+12,{align:'center'});doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...(i===3?green:(i===4&&remaining<0?red:navy)));doc.text(q[1],xx+sw/2,y+25,{align:'center'});});
     y+=sh+9;
-    doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...navy);doc.text('WING ACHIEVEMENT',M,y);y+=7;
-    const maxW=wing.length?Math.max(...wing.map(r=>Number(r.achievement)||0)):0,barW=310;
-    wing.slice(0,6).forEach(r=>{const pctv=Number(r.achievement)||0;doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(...textc);doc.text(String(r.name).slice(0,28),M,y+8);doc.setFillColor(235,239,244);doc.roundedRect(M+110,y,barW,10,3,3,'F');doc.setFillColor(...(pctv>=100?green:blue));doc.roundedRect(M+110,y,Math.max(2,Math.min(barW,barW*pctv/100)),10,3,3,'F');doc.setFont('helvetica','bold');doc.setTextColor(...(pctv>=100?green:red));doc.text(pctv.toFixed(1)+'%',M+110+barW+8,y+8);y+=14;});
+    doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...navy);doc.text(groupLabel+' ACHIEVEMENT',M,y);y+=7;
+    const maxW=displayRows.length?Math.max(...displayRows.map(r=>Number(r.achievement)||0)):0,barW=310;
+    displayRows.slice(0,6).forEach(r=>{const pctv=Number(r.achievement)||0;doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(...textc);doc.text(String(r.name).slice(0,28),M,y+8);doc.setFillColor(235,239,244);doc.roundedRect(M+110,y,barW,10,3,3,'F');doc.setFillColor(...(pctv>=100?green:blue));doc.roundedRect(M+110,y,Math.max(2,Math.min(barW,barW*pctv/100)),10,3,3,'F');doc.setFont('helvetica','bold');doc.setTextColor(...(pctv>=100?green:red));doc.text(pctv.toFixed(1)+'%',M+110+barW+8,y+8);y+=14;});
     doc.setDrawColor(...line);doc.line(M,H-22,W-M,H-22);doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(...muted);
     doc.text('District Okara Education Monitoring Report | SIS Data',M,H-10);
     doc.text('Generated: '+new Date().toLocaleString('en-PK'),W/2,H-10,{align:'center'});
     doc.text('Page 1 of 1',W-M,H-10,{align:'right'});
-    doc.save('Gender_Wise_Enrollment_District_Okara.pdf');
+    doc.save('Gender_Wise_Enrollment_District_Okara_'+reportSuffix()+'.pdf');
   }catch(err){
     console.error('PDF export error:',err);
     alert('PDF generation failed. Please try again.');
