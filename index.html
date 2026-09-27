@@ -202,9 +202,9 @@ function exportPDF(){
     const fmt=v=>Number(v||0).toLocaleString('en-US');
     const ach=sum.totalTarget?sum.total/sum.totalTarget*100:0,remaining=sum.total-sum.totalTarget;
     const addNo=isSchool||groupField==='markaz'; const headers=addNo?(isSchool?['No.','School','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement']:['No.','Markaz','Schools','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement']):(groupField==='tehsil'?['Tehsil','Schools','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement']:['Wing','Schools','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement']);
-    const widths=(addNo?(isSchool?[0.035,0.22,0.08,0.08,0.085,0.08,0.08,0.085,0.08,0.085,0.08,0.05]:[0.035,0.17,0.05,0.07,0.07,0.075,0.07,0.07,0.075,0.07,0.075,0.08,0.06]):[0.19,0.055,0.075,0.075,0.08,0.075,0.075,0.08,0.075,0.08,0.08,0.06]).map(v=>v*C);
-    const tableW=widths.reduce((a,b)=>a+b,0);
-    const totalCells=isSchool?([addNo?'':null,sum.male,sum.maleTarget,sum.male-sum.maleTarget,sum.female,sum.femaleTarget,sum.female-sum.femaleTarget,sum.total,sum.totalTarget,remaining,ach.toFixed(1)+'%'].slice(0,headers.length-1)):[sum.schools,sum.male,sum.maleTarget,sum.male-sum.maleTarget,sum.female,sum.femaleTarget,sum.female-sum.femaleTarget,sum.total,sum.totalTarget,remaining,ach.toFixed(1)+'%'];
+    const widthParts=addNo?(isSchool?[0.035,0.195,0.078,0.078,0.082,0.078,0.078,0.082,0.078,0.082,0.078,0.056]:[0.035,0.16,0.05,0.07,0.07,0.075,0.07,0.07,0.075,0.07,0.075,0.08,0.06]):(groupField==='tehsil'?[0.19,0.055,0.075,0.075,0.08,0.075,0.075,0.08,0.075,0.08,0.08,0.06]:[0.19,0.055,0.075,0.075,0.08,0.075,0.075,0.08,0.075,0.08,0.08,0.06]);
+    const widthSum=widthParts.reduce((a,b)=>a+b,0); const widths=widthParts.map(v=>v/widthSum*C); const tableW=C;
+    const totalCells=isSchool?[sum.male,sum.maleTarget,sum.male-sum.maleTarget,sum.female,sum.femaleTarget,sum.female-sum.femaleTarget,sum.total,sum.totalTarget,remaining,ach.toFixed(1)+'%']:[sum.schools,sum.male,sum.maleTarget,sum.male-sum.maleTarget,sum.female,sum.femaleTarget,sum.female-sum.femaleTarget,sum.total,sum.totalTarget,remaining,ach.toFixed(1)+'%'];
     const footer=page=>{doc.setDrawColor(...line);doc.setLineWidth(.7);doc.line(M,H-25,W-M,H-25);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...muted);doc.text('Dashboard developed by M.Sajid AEO Markaz Amli Moti (W)',W/2,H-12,{align:'center'});doc.text('Page '+page,M,H-12);};
     const getVal=id=>{const e=document.getElementById(id);return e?String(e.value||e.options?.[e.selectedIndex]?.text||'').trim():''};
     const unique=(arr)=>[...new Set(arr.filter(x=>x&&x!=='All'))];
@@ -242,15 +242,20 @@ function exportPDF(){
       return y+25;
     };
     let page=1;drawTop();drawCards();
-    let y=drawTableHeading(154);const rowH=isSchool?21:23;
+    let y=drawTableHeading(154);
+    const baseRowH=isSchool?20:22;
     const drawRow=(r,i)=>{
+      const vals=isSchool?[i+1,r.name??r.school??'',r.male,r.maleTarget,r.remainingBoys??(r.male-r.maleTarget),r.female,r.femaleTarget,r.remainingGirls??(r.female-r.femaleTarget),r.total,r.totalTarget,r.remainingTotal??(r.total-r.totalTarget),(Number(r.achievement)||0).toFixed(1)+'%']:addNo?[i+1,r.name??r.markaz??'',r.schools??1,r.male,r.maleTarget,r.remainingBoys??(r.male-r.maleTarget),r.female,r.femaleTarget,r.remainingGirls??(r.female-r.femaleTarget),r.total,r.totalTarget,r.remainingTotal??(r.total-r.totalTarget),(Number(r.achievement)||0).toFixed(1)+'%']:[r.name??r.school??'',r.schools??1,r.male,r.maleTarget,r.remainingBoys??(r.male-r.maleTarget),r.female,r.femaleTarget,r.remainingGirls??(r.female-r.femaleTarget),r.total,r.totalTarget,r.remainingTotal??(r.total-r.totalTarget),(Number(r.achievement)||0).toFixed(1)+'%'];
+      doc.setFont('helvetica','normal');doc.setFontSize(isSchool?7:6.7);
+      const nameLines=doc.splitTextToSize(String(vals[1]??vals[0]??''),Math.max(30,widths[isSchool?1:1]-8));
+      const rowH=Math.max(baseRowH,Math.min(34,8+nameLines.length*8));
+      if(y+rowH>H-48){footer(page);doc.addPage();page++;drawTop();y=drawTableHeading(96);}
       doc.setFillColor(...(i%2?[255,255,255]:[247,249,252]));doc.setDrawColor(...line);doc.setLineWidth(.6);doc.rect(M,y,tableW,rowH,'FD');
-      let vals=isSchool?[i+1,r.name??r.school??'',r.male,r.maleTarget,r.remainingBoys??(r.male-r.maleTarget),r.female,r.femaleTarget,r.remainingGirls??(r.female-r.femaleTarget),r.total,r.totalTarget,r.remainingTotal??(r.total-r.totalTarget),(Number(r.achievement)||0).toFixed(1)+'%']:addNo?[i+1,r.name??r.markaz??'',r.schools??1,r.male,r.maleTarget,r.remainingBoys??(r.male-r.maleTarget),r.female,r.femaleTarget,r.remainingGirls??(r.female-r.femaleTarget),r.total,r.totalTarget,r.remainingTotal??(r.total-r.totalTarget),(Number(r.achievement)||0).toFixed(1)+'%']:[r.name??r.school??'',r.schools??1,r.male,r.maleTarget,r.remainingBoys??(r.male-r.maleTarget),r.female,r.femaleTarget,r.remainingGirls??(r.female-r.femaleTarget),r.total,r.totalTarget,r.remainingTotal??(r.total-r.totalTarget),(Number(r.achievement)||0).toFixed(1)+'%'];
-      let x=M;vals.forEach((v,k)=>{const h=headers[k],n=Number(v);doc.setFont('helvetica',k===headers.length-1?'bold':'normal');doc.setFontSize(isSchool?7.5:7);doc.setTextColor(...(h.includes('Remaining')?(n<0?red:green):k===11?((Number(r.achievement)||0)>=100?green:red):textc));doc.text(String(k===0?v:typeof v==='number'?fmt(v):v),k===0?x+5:x+widths[k]/2,y+15,{align:k===0?'left':'center',maxWidth:widths[k]-7});x+=widths[k];});
+      let x=M;vals.forEach((v,k)=>{const h=headers[k],n=Number(v);doc.setFont('helvetica',k===headers.length-1?'bold':'normal');doc.setFontSize(isSchool?7:6.7);doc.setTextColor(...(h.includes('Remaining')?(n<0?red:green):k===headers.length-1?((Number(r.achievement)||0)>=100?green:red):textc));const txt=String(k===0?v:typeof v==='number'?fmt(v):v);const lines=k===1?doc.splitTextToSize(txt,Math.max(30,widths[k]-8)):txt;doc.text(lines,k===0?x+5:x+widths[k]/2,y+(lines.length>1?10:Math.min(15,rowH-6)),{align:k===0?'left':'center',maxWidth:widths[k]-7,lineHeightFactor:1.05});x+=widths[k];});
       x=M;headers.forEach((h,k)=>{doc.setDrawColor(...line);doc.setLineWidth(.45);doc.rect(x,y,widths[k],rowH,'S');x+=widths[k];});
       y+=rowH;
     };
-    dataRows.forEach((r,i)=>{if(y+rowH>H-48){footer(page);doc.addPage();page++;drawTop();y=drawTableHeading(96);}drawRow(r,i);});
+    dataRows.forEach((r,i)=>drawRow(r,i));
     if(y+rowH+8<=H-48){
       doc.setFillColor(232,238,245);doc.setDrawColor(...line);doc.setLineWidth(.7);doc.rect(M,y,tableW,rowH,'FD');doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(...navy);doc.text('TOTAL',M+5,y+15);
       let x=M+widths[0];totalCells.forEach((v,k)=>{const col=k+1;doc.setTextColor(...((col===4||col===7||col===10)?(Number(v)<0?red:green):col===11?green:navy));doc.text(String(typeof v==='number'?fmt(v):v),x+widths[col]/2,y+15,{align:'center'});doc.setDrawColor(...line);doc.rect(x,y,widths[col],rowH,'S');x+=widths[col];});
