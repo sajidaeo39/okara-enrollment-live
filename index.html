@@ -190,79 +190,54 @@ function exportPDF(){
       z.maleTarget+=Number(r.maleTarget)||0; z.femaleTarget+=Number(r.femaleTarget)||0; z.totalTarget+=Number(r.totalTarget)||0;
       return z;
     },{schools:0,male:0,female:0,total:0,maleTarget:0,femaleTarget:0,totalTarget:0});
-    const groupField=(currentView==='markaz'||currentView==='top10markaz'||currentView==='last10markaz')?'markaz':(currentView==='tehsil'?'tehsil':(currentView==='school'||currentView==='lowSchools'?'school':'wing'));
-    const groupLabel=groupField==='markaz'?'MARKAZ-WISE':groupField==='tehsil'?'TEHSIL-WISE':groupField==='school'?'SCHOOL-WISE':'WING-WISE';
-    const groupRows=typeof aggregate==='function'?aggregate(list,groupField).sort((a,b)=>b.achievement-a.achievement):[];
-    const displayRows=(currentView==='top10markaz'?groupRows.slice(0,10):(currentView==='last10markaz'?groupRows.slice(-10):groupRows));
+    const isSchool=currentView==='school'||currentView==='lowSchools';
+    const groupField=(currentView==='markaz'||currentView==='top10markaz'||currentView==='last10markaz')?'markaz':currentView==='tehsil'?'tehsil':isSchool?'school':'wing';
+    const groupLabel=groupField==='markaz'?'MARKAZ-WISE':groupField==='tehsil'?'TEHSIL-WISE':isSchool?'SCHOOL-WISE':'WING-WISE';
+    let dataRows=isSchool?list.map(r=>({...r,name:r.school,remainingBoys:r.male-r.maleTarget,remainingGirls:r.female-r.femaleTarget,remainingTotal:r.total-r.totalTarget,achievement:Number(r.achievement)||0}):aggregate(list,groupField).sort((a,b)=>b.achievement-a.achievement);
+    if(currentView==='top10markaz') dataRows=dataRows.slice(0,10);
+    if(currentView==='last10markaz') dataRows=dataRows.slice(-10);
+    if(currentView==='lowSchools') dataRows=dataRows.sort((a,b)=>a.achievement-b.achievement).slice(0,Math.max(1,Math.min(50,Number(document.getElementById('lowCount')?.value||50))));
     const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
-    const W=842,H=595,M=28,C=W-M*2,navy=[25,50,88],blue=[48,84,135],light=[244,247,250],line=[214,221,230],green=[31,130,86],red=[190,48,48],textc=[45,55,68],muted=[92,105,122];
+    const W=842,H=595,M=28,C=W-2*M,navy=[25,50,88],light=[244,247,250],line=[214,221,230],green=[31,130,86],red=[190,48,48],textc=[45,55,68],muted=[92,105,122];
+    const palette=[[48,84,135],[31,130,86],[205,119,34],[125,85,165],[32,145,160],[190,65,75],[90,115,145],[150,115,70]];
     const fmt=v=>Number(v||0).toLocaleString('en-US');
-    const ach=sum.totalTarget?sum.total/sum.totalTarget*100:0;
-    const remaining=sum.total-sum.totalTarget;
-    doc.setFillColor(255,255,255);doc.rect(0,0,W,H,'F');
-    doc.setFillColor(...navy);doc.rect(0,0,W,6,'F');
-    doc.setFont('helvetica','bold');doc.setTextColor(...navy);doc.setFontSize(17);
-    doc.text('Gender Wise Enrollment - District Okara',W/2,30,{align:'center'});
-    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...muted);
-    doc.text('SIS Enrollment Monitoring Report',W/2,44,{align:'center'});
-    doc.setFontSize(7);doc.text('Report Date / Time: '+(typeof reportDateTime!=='undefined'&&reportDateTime?reportDateTime:new Date().toLocaleString('en-PK')),W/2,56,{align:'center'});
-
-    const cards=[
-      ['Schools',sum.schools,'normal'],['Boys Enrollment',sum.male,'normal'],['Target Boys',sum.maleTarget,'normal'],
-      ['Remaining Boys',sum.male-sum.maleTarget,'remaining'],['Girls Enrollment',sum.female,'normal'],['Target Girls',sum.femaleTarget,'normal'],
-      ['Remaining Girls',sum.female-sum.femaleTarget,'remaining'],['Remaining Total Target',remaining,'remaining']
-    ];
-    const gap=6,cw=(C-gap*7)/8,cy=66,ch=42;
-    cards.forEach((q,i)=>{
-      const x=M+i*(cw+gap),v=Number(q[1]);doc.setFillColor(...light);doc.setDrawColor(...line);doc.roundedRect(x,cy,cw,ch,4,4,'FD');
-      doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(...muted);doc.text(q[0],x+cw/2,cy+13,{align:'center'});
-      doc.setFont('helvetica','bold');doc.setFontSize(11);
-      if(q[2]==='remaining') doc.setTextColor(...(v<0?red:green)); else doc.setTextColor(...navy);
-      doc.text(fmt(v),x+cw/2,cy+29,{align:'center'});
-    });
-
-    let y=124;
-    doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...navy);doc.text(groupLabel+' PERFORMANCE',M,y);
-    doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(...green);doc.text('Green = On Target',M+145,y);
-    doc.setTextColor(...red);doc.text('Red = Target Not Achieved',M+225,y);
-    y+=7;
-    const headers=[groupField==='school'?'School':groupField==='markaz'?'Markaz':groupField==='tehsil'?'Tehsil':'Wing','Schools','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement'];
-    const widths=[100,40,50,52,58,50,52,58,50,55,60,55];
-    const tableW=widths.reduce((a,v)=>a+v,0),th=20,rh=15;
-    doc.setFillColor(...navy);doc.rect(M,y,tableW,th,'F');doc.setFont('helvetica','bold');doc.setFontSize(5.8);doc.setTextColor(255,255,255);
-    let x=M;headers.forEach((h,k)=>{doc.text(h,x+widths[k]/2,y+13,{align:'center',maxWidth:widths[k]-3});x+=widths[k]});y+=th;
-    displayRows.forEach((r,i)=>{
-      doc.setFillColor(...(i%2?[255,255,255]:[247,249,252]));doc.rect(M,y,tableW,rh,'F');
-      const vals=[r.name,r.schools,r.male,r.maleTarget,r.remainingBoys,r.female,r.femaleTarget,r.remainingGirls,r.total,r.totalTarget,r.remainingTotal,(Number(r.achievement)||0).toFixed(1)+'%'];
-      x=M;vals.forEach((v,k)=>{
-        const h=headers[k],n=parseFloat(String(v).replace(/,/g,''));
-        doc.setFont('helvetica',h==='Achievement'?'bold':'normal');doc.setFontSize(5.7);
-        if(h.includes('Remaining')) doc.setTextColor(...(n<0?red:green)); else if(h==='Achievement') doc.setTextColor(...green); else doc.setTextColor(...textc);
-        doc.text(String(v),k===0?x+3:x+widths[k]/2,y+10,{align:k===0?'left':'center',maxWidth:widths[k]-4});x+=widths[k];
-      });y+=rh;
-    });
-    doc.setFillColor(232,238,245);doc.rect(M,y,tableW,rh,'F');doc.setFont('helvetica','bold');doc.setFontSize(5.8);doc.setTextColor(...navy);
-    doc.text('TOTAL',M+3,y+10);
+    const ach=sum.totalTarget?sum.total/sum.totalTarget*100:0,remaining=sum.total-sum.totalTarget;
+    const headers=[isSchool?'School':groupField==='markaz'?'Markaz':groupField==='tehsil'?'Tehsil':'Wing','Schools','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement'];
+    const widths=[0.19,0.055,0.075,0.075,0.08,0.075,0.075,0.08,0.075,0.08,0.08,0.06].map(v=>v*C);
+    const tableW=widths.reduce((a,b)=>a+b,0);
     const totalCells=[sum.schools,sum.male,sum.maleTarget,sum.male-sum.maleTarget,sum.female,sum.femaleTarget,sum.female-sum.femaleTarget,sum.total,sum.totalTarget,remaining,ach.toFixed(1)+'%'];
-    x=M+widths[0];totalCells.forEach((v,k)=>{const col=k+1;let tc=navy;if(col===4||col===7||col===10)tc=Number(String(v).replace(/,/g,''))<0?red:green;if(col===11)tc=green;doc.setTextColor(...tc);doc.text(String(typeof v==='number'?fmt(v):v),x+widths[col]/2,y+10,{align:'center'});x+=widths[col]});y+=rh+9;
-
-    doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...navy);doc.text('KEY PERFORMANCE SUMMARY',M,y);y+=6;
-    const summary=[['Total Schools',fmt(sum.schools)],['Total Enrollment',fmt(sum.total)],['Total Target',fmt(sum.totalTarget)],['Overall Achievement',ach.toFixed(1)+'%'],['Target Gap',fmt(remaining)]];
-    const sg=7,sw=(C-sg*4)/5,sh=31;
-    summary.forEach((q,i)=>{const xx=M+i*(sw+sg);doc.setFillColor(...light);doc.setDrawColor(...line);doc.roundedRect(xx,y,sw,sh,4,4,'FD');doc.setFont('helvetica','normal');doc.setFontSize(6.2);doc.setTextColor(...muted);doc.text(q[0],xx+sw/2,y+12,{align:'center'});doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...(i===3?green:(i===4&&remaining<0?red:navy)));doc.text(q[1],xx+sw/2,y+25,{align:'center'});});
-    y+=sh+9;
-    doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...navy);doc.text(groupLabel+' ACHIEVEMENT',M,y);y+=7;
-    const maxW=displayRows.length?Math.max(...displayRows.map(r=>Number(r.achievement)||0)):0,barW=310;
-    displayRows.slice(0,6).forEach(r=>{const pctv=Number(r.achievement)||0;doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(...textc);doc.text(String(r.name).slice(0,28),M,y+8);doc.setFillColor(235,239,244);doc.roundedRect(M+110,y,barW,10,3,3,'F');doc.setFillColor(...(pctv>=100?green:blue));doc.roundedRect(M+110,y,Math.max(2,Math.min(barW,barW*pctv/100)),10,3,3,'F');doc.setFont('helvetica','bold');doc.setTextColor(...(pctv>=100?green:red));doc.text(pctv.toFixed(1)+'%',M+110+barW+8,y+8);y+=14;});
-    doc.setDrawColor(...line);doc.line(M,H-22,W-M,H-22);doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(...muted);
-    doc.text('District Okara Education Monitoring Report | SIS Data',M,H-10);
-    doc.text('Generated: '+new Date().toLocaleString('en-PK'),W/2,H-10,{align:'center'});
-    doc.text('Page 1 of 1',W-M,H-10,{align:'right'});
-    doc.save('Gender_Wise_Enrollment_District_Okara_'+reportSuffix()+'.pdf');
-  }catch(err){
-    console.error('PDF export error:',err);
-    alert('PDF generation failed. Please try again.');
-  }
+    const footer=page=>{doc.setDrawColor(...line);doc.line(M,H-25,W-M,H-25);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...muted);doc.text('Dashboard developed by M.Sajid AEO Markaz Amli Moti (W)',W/2,H-12,{align:'center'});doc.text('Page '+page,M,H-12);};
+    const drawTop=()=>{
+      doc.setFillColor(255,255,255);doc.rect(0,0,W,H,'F');doc.setFillColor(...navy);doc.rect(0,0,W,6,'F');
+      doc.setFont('helvetica','bold');doc.setTextColor(...navy);doc.setFontSize(18);doc.text('Latest SIS Enrollment',W/2,32,{align:'center'});
+      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...muted);doc.text('Report Date / Time: '+(typeof reportDateTime!=='undefined'&&reportDateTime?reportDateTime:new Date().toLocaleString('en-PK')),W/2,48,{align:'center'});
+    };
+    const drawCards=()=>{
+      const cards=[['Schools',sum.schools],['Boys Enrollment',sum.male],['Target Boys',sum.maleTarget],['Remaining Boys',sum.male-sum.maleTarget],['Girls Enrollment',sum.female],['Target Girls',sum.femaleTarget],['Remaining Girls',sum.female-sum.femaleTarget],['Remaining Total Target',remaining]];
+      const gap=8,cw=(C-gap*7)/8,cy=61,ch=47;
+      cards.forEach((q,i)=>{const x=M+i*(cw+gap),v=Number(q[1]);doc.setFillColor(...light);doc.setDrawColor(...line);doc.roundedRect(x,cy,cw,ch,4,4,'FD');doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...muted);doc.text(q[0],x+cw/2,cy+15,{align:'center',maxWidth:cw-6});doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...(q[0].includes('Remaining')?(v<0?red:green):navy));doc.text(fmt(v),x+cw/2,cy+34,{align:'center'});});
+    };
+    const drawTableHeading=(y)=>{
+      doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...navy);doc.text(groupLabel+' PERFORMANCE',W/2,y,{align:'center'});
+      doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...green);doc.text('Green = On Target',W/2-90,y+13,{align:'center'});doc.setTextColor(...red);doc.text('Red = Target Not Achieved',W/2+75,y+13,{align:'center'});
+      y+=23;doc.setFillColor(...navy);doc.rect(M,y,tableW,23,'F');doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(255,255,255);let x=M;
+      headers.forEach((h,k)=>{doc.text(h,x+widths[k]/2,y+15,{align:'center',maxWidth:widths[k]-4});x+=widths[k];});return y+23;
+    };
+    let page=1;drawTop();drawCards();let y=drawTableHeading(123);const rowH=21;
+    const drawRow=(r,i)=>{
+      doc.setFillColor(...(i%2?[255,255,255]:[247,249,252]));doc.rect(M,y,tableW,rowH,'F');let vals=[r.name??r.school??'',r.schools??1,r.male,r.maleTarget,r.remainingBoys??(r.male-r.maleTarget),r.female,r.femaleTarget,r.remainingGirls??(r.female-r.femaleTarget),r.total,r.totalTarget,r.remainingTotal??(r.total-r.totalTarget),(Number(r.achievement)||0).toFixed(1)+'%'];
+      let x=M;vals.forEach((v,k)=>{const h=headers[k],n=Number(v);doc.setFont('helvetica',k===11?'bold':'normal');doc.setFontSize(6.5);doc.setTextColor(...(h.includes('Remaining')?(n<0?red:green):k===11?((Number(r.achievement)||0)>=100?green:red):textc));doc.text(String(k===0?v:typeof v==='number'?fmt(v):v),k===0?x+5:x+widths[k]/2,y+14,{align:k===0?'left':'center',maxWidth:widths[k]-7});x+=widths[k];});y+=rowH;
+    };
+    dataRows.forEach((r,i)=>{if(y+rowH>H-48){footer(page);doc.addPage();page++;drawTop();y=drawTableHeading(75);}drawRow(r,i);});
+    if(y+rowH+8<=H-48){doc.setFillColor(232,238,245);doc.rect(M,y,tableW,rowH,'F');doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(...navy);doc.text('TOTAL',M+5,y+14);let x=M+widths[0];totalCells.forEach((v,k)=>{const col=k+1;doc.setTextColor(...((col===4||col===7||col===10)?(Number(v)<0?red:green):col===11?green:navy));doc.text(String(typeof v==='number'?fmt(v):v),x+widths[col]/2,y+14,{align:'center'});x+=widths[col];});y+=rowH+16;}
+    if(currentView==='wing'||currentView==='tehsil'){
+      if(y+80>H-48){footer(page);doc.addPage();page++;drawTop();y=78;}
+      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...navy);doc.text(groupLabel+' ACHIEVEMENT',M,y);y+=12;
+      dataRows.forEach((r,i)=>{if(y+18>H-48){footer(page);doc.addPage();page++;drawTop();y=70;}const pctv=Number(r.achievement)||0;doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...textc);doc.text(String(r.name).slice(0,34),M,y+9,{maxWidth:120});doc.setFillColor(235,239,244);doc.roundedRect(M+135,y,Math.max(20,C-205),11,3,3,'F');const bw=Math.max(2,Math.min(C-205,(C-205)*pctv/100));doc.setFillColor(...palette[i%palette.length]);doc.roundedRect(M+135,y,bw,11,3,3,'F');doc.setFont('helvetica','bold');doc.setTextColor(...(pctv>=100?green:red));doc.text(pctv.toFixed(1)+'%',W-M-5,y+9,{align:'right'});y+=19;});
+    }
+    footer(page);
+    doc.save('Latest_SIS_Enrollment_'+reportSuffix()+'.pdf');
+  }catch(err){console.error('PDF export error:',err);alert('PDF generation failed. Please try again.');}
 }
 async function loadLiveData(){
  try{
