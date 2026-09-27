@@ -206,11 +206,28 @@ function exportPDF(){
     const tableW=widths.reduce((a,b)=>a+b,0);
     const totalCells=[sum.schools,sum.male,sum.maleTarget,sum.male-sum.maleTarget,sum.female,sum.femaleTarget,sum.female-sum.femaleTarget,sum.total,sum.totalTarget,remaining,ach.toFixed(1)+'%'];
     const footer=page=>{doc.setDrawColor(...line);doc.setLineWidth(.7);doc.line(M,H-25,W-M,H-25);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...muted);doc.text('Dashboard developed by M.Sajid AEO Markaz Amli Moti (W)',W/2,H-12,{align:'center'});doc.text('Page '+page,M,H-12);};
+    const getVal=id=>{const e=document.getElementById(id);return e?((e.value||e.options?.[e.selectedIndex]?.text||'').trim()):''};
+    const contextTitle=()=>{
+      const tehsil=getVal('tehsilFilter')||getVal('tehsilSelect');
+      const wing=getVal('wingFilter')||getVal('wingSelect');
+      const markaz=getVal('markazFilter')||getVal('markazSelect');
+      const parts=['District Okara'];
+      if(groupField==='wing'){ if(wing && wing!=='All') parts.push('Wing: '+wing); }
+      else if(groupField==='tehsil'){ if(tehsil && tehsil!=='All') parts.push('Tehsil: '+tehsil); }
+      else if(groupField==='markaz'){ if(tehsil && tehsil!=='All') parts.push('Tehsil: '+tehsil); if(markaz && markaz!=='All') parts.push('Markaz: '+markaz); }
+      else if(isSchool){ if(tehsil && tehsil!=='All') parts.push('Tehsil: '+tehsil); if(wing && wing!=='All') parts.push('Wing: '+wing); if(markaz && markaz!=='All') parts.push('Markaz: '+markaz); }
+      return parts.join(' | ');
+    };
+    const reportTitle=()=>{
+      if(groupField==='wing') return contextTitle()+' Wing-wise Enrollment';
+      if(groupField==='tehsil') return contextTitle()+' Tehsil-wise Enrollment';
+      if(groupField==='markaz') return contextTitle()+' Markaz-wise Enrollment';
+      return contextTitle()+' School-wise Enrollment';
+    };
     const drawTop=()=>{
       doc.setFillColor(255,255,255);doc.rect(0,0,W,H,'F');doc.setFillColor(...navy);doc.rect(0,0,W,6,'F');
       doc.setFont('helvetica','bold');doc.setTextColor(...navy);doc.setFontSize(18);doc.text('Latest SIS Enrollment',W/2,36,{align:'center'});
       doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...muted);doc.text('Report Date / Time: '+(typeof reportDateTime!=='undefined'&&reportDateTime?reportDateTime:new Date().toLocaleString('en-PK')),W/2,53,{align:'center'});
-      const ctxParts=['District Okara']; if(groupField==='tehsil') ctxParts.push('Tehsil: '+(typeof selectedTehsil!=='undefined'&&selectedTehsil?selectedTehsil:'All')); if(groupField==='wing') ctxParts.push('Wing: '+(typeof selectedWing!=='undefined'&&selectedWing?selectedWing:'All')); if(groupField==='markaz') ctxParts.push('Markaz: '+(typeof selectedMarkaz!=='undefined'&&selectedMarkaz?selectedMarkaz:'All')); if(isSchool){if(typeof selectedMarkaz!=='undefined'&&selectedMarkaz) ctxParts.push('Markaz: '+selectedMarkaz); else if(typeof selectedTehsil!=='undefined'&&selectedTehsil) ctxParts.push('Tehsil: '+selectedTehsil); else if(typeof selectedWing!=='undefined'&&selectedWing) ctxParts.push('Wing: '+selectedWing);} doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...navy);doc.text(ctxParts.join('  |  '),W/2,66,{align:'center'});
     };
     const drawCards=()=>{
       const cards=[['Schools',sum.schools],['Boys Enrollment',sum.male],['Target Boys',sum.maleTarget],['Remaining Boys',sum.male-sum.maleTarget],['Girls Enrollment',sum.female],['Target Girls',sum.femaleTarget],['Remaining Girls',sum.female-sum.femaleTarget],['Remaining Total Target',remaining]];
@@ -219,13 +236,15 @@ function exportPDF(){
     };
     const drawTableHeading=(y)=>{
       doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...navy);doc.text(groupLabel+' PERFORMANCE',W/2,y,{align:'center'});
-      doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...green);doc.text('Green = On Target',W/2-85,y+14,{align:'center'});doc.setTextColor(...red);doc.text('Red = Target Not Achieved',W/2+78,y+14,{align:'center'});
+      doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...green);doc.text('Green = On Target',W/2-95,y+14,{align:'center'});doc.setTextColor(...red);doc.text('Red = Target Not Achieved',W/2+82,y+14,{align:'center'});
       y+=25;doc.setFillColor(...navy);doc.setDrawColor(...navy);doc.setLineWidth(.8);doc.rect(M,y,tableW,25,'FD');doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(255,255,255);let x=M;
       headers.forEach((h,k)=>{doc.text(h,x+widths[k]/2,y+16,{align:'center',maxWidth:widths[k]-4});x+=widths[k];});
       x=M;headers.forEach((h,k)=>{doc.setDrawColor(255,255,255);doc.rect(x,y,widths[k],25,'S');x+=widths[k];});
       return y+25;
     };
-let page=1;drawTop();drawCards();let y=drawTableHeading(162);const rowH=23;
+    let page=1;drawTop();drawCards();
+    doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...navy);doc.text(reportTitle(),W/2,154,{align:'center'});
+    let y=drawTableHeading(174);const rowH=23;
     const drawRow=(r,i)=>{
       doc.setFillColor(...(i%2?[255,255,255]:[247,249,252]));doc.setDrawColor(...line);doc.setLineWidth(.6);doc.rect(M,y,tableW,rowH,'FD');
       let vals=[r.name??r.school??'',r.schools??1,r.male,r.maleTarget,r.remainingBoys??(r.male-r.maleTarget),r.female,r.femaleTarget,r.remainingGirls??(r.female-r.femaleTarget),r.total,r.totalTarget,r.remainingTotal??(r.total-r.totalTarget),(Number(r.achievement)||0).toFixed(1)+'%'];
