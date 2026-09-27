@@ -193,7 +193,7 @@ function exportPDF(){
     const isSchool=currentView==='school'||currentView==='lowSchools';
     const groupField=(currentView==='markaz'||currentView==='top10markaz'||currentView==='last10markaz')?'markaz':currentView==='tehsil'?'tehsil':isSchool?'school':'wing';
     const groupLabel=groupField==='markaz'?'MARKAZ-WISE':groupField==='tehsil'?'TEHSIL-WISE':isSchool?'SCHOOL-WISE':'WING-WISE';
-    let dataRows=isSchool?list.map(r=>({...r,name:r.school,remainingBoys:r.male-r.maleTarget,remainingGirls:r.female-r.femaleTarget,remainingTotal:r.total-r.totalTarget,achievement:Number(r.achievement)||0}):aggregate(list,groupField).sort((a,b)=>b.achievement-a.achievement);
+    let dataRows=isSchool?list.map(r=>({...r,name:r.school,remainingBoys:r.male-r.maleTarget,remainingGirls:r.female-r.femaleTarget,remainingTotal:r.total-r.totalTarget,achievement:Number(r.achievement)||0})):aggregate(list,groupField).sort((a,b)=>b.achievement-a.achievement);
     if(currentView==='top10markaz') dataRows=dataRows.slice(0,10);
     if(currentView==='last10markaz') dataRows=dataRows.slice(-10);
     if(currentView==='lowSchools') dataRows=dataRows.sort((a,b)=>a.achievement-b.achievement).slice(0,Math.max(1,Math.min(50,Number(document.getElementById('lowCount')?.value||50))));
