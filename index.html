@@ -43,7 +43,7 @@ header p{margin:4px 0 0;color:#52657a;font-size:11px;letter-spacing:.15px}
 .note{font-size:11px;color:var(--muted);margin:4px 0 7px}
 .tablebox{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:auto;max-height:68vh}
 table{border-collapse:collapse;width:100%;font-size:10px;table-layout:fixed}
-th,td{padding:9px 5px;white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.3;border-bottom:1px solid var(--line);text-align:center;font-variant-numeric:tabular-nums}
+th,td{padding:9px 5px;white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.3;border-bottom:1px solid var(--line);text-align:center!important;vertical-align:middle!important;font-variant-numeric:tabular-nums}
 th{position:sticky;top:0;background:#edf4fd;z-index:1}
 th:first-child,td:first-child{text-align:left!important}
 th:not(:first-child),td:not(:first-child){text-align:center!important}
@@ -126,6 +126,7 @@ function tableData(){
 function render(){
  renderCards();let td=tableData();document.getElementById('thead').innerHTML='<tr>'+td.headers.map(h=>`<th>${h}</th>`).join('')+'</tr>';
  document.getElementById('tbody').innerHTML=td.data.map(r=>'<tr>'+r.map((v,i)=>`<td class="${(td.headers[i]||'').includes('Remaining')?cls(Number(v)):''}">${typeof v==='number'?fmt(v):v}</td>`).join('')+'</tr>').join('');
+document.querySelectorAll('#tbody td:not(:first-child), #thead th:not(:first-child)').forEach(el=>{el.style.setProperty('text-align','center','important');el.style.setProperty('vertical-align','middle','important');});
  const labels={school:'School Wise',markaz:'Markaz Wise',tehsil:'Tehsil Wise',wing:'Wing Wise',top10markaz:'Top 10 Markaz',last10markaz:'Last 10 Markaz',lowSchools:'Low Performing Schools'};
  
 }
