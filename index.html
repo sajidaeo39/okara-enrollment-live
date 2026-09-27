@@ -257,7 +257,7 @@ function exportPDF(){
       const rowH=Math.max(baseRowH,Math.min(34,8+nameLines.length*8));
       if(y+rowH>H-48){footer(page);doc.addPage();page++;drawTop();y=drawTableHeading(96);}
       doc.setFillColor(...(i%2?[255,255,255]:[247,249,252]));doc.setDrawColor(...line);doc.setLineWidth(.6);doc.rect(M,y,tableW,rowH,'FD');
-      let x=M;vals.forEach((v,k)=>{const h=headers[k],n=Number(v);doc.setFont('helvetica',k===headers.length-1?'bold':'normal');doc.setFontSize(isSchool?7:6.7);doc.setTextColor(...(h.includes('Remaining')?(n<0?red:green):k===headers.length-1?((Number(r.achievement)||0)>=100?green:red):textc));const txt=String(k===0?v:typeof v==='number'?fmt(v):v);const lines=k===1?doc.splitTextToSize(txt,Math.max(30,widths[k]-8)):txt;doc.text(lines,k===0?x+5:x+widths[k]/2,y+(lines.length>1?10:Math.min(15,rowH-6)),{align:k===0?'left':'center',maxWidth:widths[k]-7,lineHeightFactor:1.05});x+=widths[k];});
+      let x=M;vals.forEach((v,k)=>{const h=headers[k],n=Number(v);doc.setFont('helvetica',k===headers.length-1?'bold':'normal');doc.setFontSize(isSchool?7:6.7);doc.setTextColor(...(h.includes('Remaining')?(n<0?red:green):k===headers.length-1?((Number(r.achievement)||0)>=100?green:red):textc));const txt=String(k===0?v:typeof v==='number'?fmt(v):v);const lines=k===1?doc.splitTextToSize(txt,Math.max(30,widths[k]-8)):txt;const isName=(k===1)||(k===0&&!addNo);const tx=isName?x+5:x+widths[k]/2;const ty=lines.length>1?y+10:y+rowH/2+2.5;doc.text(lines,tx,ty,{align:isName?'left':'center',maxWidth:widths[k]-7,lineHeightFactor:1.05});x+=widths[k];});
       x=M;headers.forEach((h,k)=>{doc.setDrawColor(...line);doc.setLineWidth(.45);doc.rect(x,y,widths[k],rowH,'S');x+=widths[k];});
       y+=rowH;
     };
