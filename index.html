@@ -243,6 +243,7 @@ function exportPDF(){
     };
     let page=1;drawTop();drawCards();
     let y=drawTableHeading(154);
+    let currentRowH=20;
     const baseRowH=isSchool?20:22;
     const drawRow=(r,i)=>{
       const vals=isSchool?[i+1,r.name??r.school??'',r.male,r.maleTarget,r.remainingBoys??(r.male-r.maleTarget),r.female,r.femaleTarget,r.remainingGirls??(r.female-r.femaleTarget),r.total,r.totalTarget,r.remainingTotal??(r.total-r.totalTarget),(Number(r.achievement)||0).toFixed(1)+'%']:addNo?[i+1,r.name??r.markaz??'',r.schools??1,r.male,r.maleTarget,r.remainingBoys??(r.male-r.maleTarget),r.female,r.femaleTarget,r.remainingGirls??(r.female-r.femaleTarget),r.total,r.totalTarget,r.remainingTotal??(r.total-r.totalTarget),(Number(r.achievement)||0).toFixed(1)+'%']:[r.name??r.school??'',r.schools??1,r.male,r.maleTarget,r.remainingBoys??(r.male-r.maleTarget),r.female,r.femaleTarget,r.remainingGirls??(r.female-r.femaleTarget),r.total,r.totalTarget,r.remainingTotal??(r.total-r.totalTarget),(Number(r.achievement)||0).toFixed(1)+'%'];
@@ -256,10 +257,11 @@ function exportPDF(){
       y+=rowH;
     };
     dataRows.forEach((r,i)=>drawRow(r,i));
-    if(y+rowH+8<=H-48){
-      doc.setFillColor(232,238,245);doc.setDrawColor(...line);doc.setLineWidth(.7);doc.rect(M,y,tableW,rowH,'FD');doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(...navy);doc.text('TOTAL',M+5,y+15);
-      let x=M+widths[0];totalCells.forEach((v,k)=>{const col=k+1;doc.setTextColor(...((col===4||col===7||col===10)?(Number(v)<0?red:green):col===11?green:navy));doc.text(String(typeof v==='number'?fmt(v):v),x+widths[col]/2,y+15,{align:'center'});doc.setDrawColor(...line);doc.rect(x,y,widths[col],rowH,'S');x+=widths[col];});
-      doc.setDrawColor(...line);doc.rect(M,y,widths[0],rowH,'S');y+=rowH+20;
+    const totalRowH=20;
+    if(y+totalRowH+8<=H-48){
+      doc.setFillColor(232,238,245);doc.setDrawColor(...line);doc.setLineWidth(.7);doc.rect(M,y,tableW,totalRowH,'FD');doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(...navy);doc.text('TOTAL',M+5,y+14);
+      let x=M+widths[0];totalCells.forEach((v,k)=>{const col=k+1;doc.setTextColor(...((col===4||col===7||col===10)?(Number(v)<0?red:green):col===11?green:navy));doc.text(String(typeof v==='number'?fmt(v):v),x+widths[col]/2,y+14,{align:'center'});doc.setDrawColor(...line);doc.rect(x,y,widths[col],totalRowH,'S');x+=widths[col];});
+      doc.setDrawColor(...line);doc.rect(M,y,widths[0],totalRowH,'S');y+=totalRowH+20;
     }
     if(currentView==='wing'||currentView==='tehsil'){
       if(y+90>H-48){footer(page);doc.addPage();page++;drawTop();y=96;}
