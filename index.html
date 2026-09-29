@@ -63,10 +63,10 @@ td:first-child{font-weight:500}
   #headerLatest{font-size:11px!important;line-height:1.4}
   .wrap{width:100%;max-width:100%;padding:8px}
   .dashboard-title{font-size:17px!important}
-  .cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:12px}
-  .card{height:auto;min-height:72px;padding:10px 6px}
-  .label{font-size:10px;white-space:normal;line-height:1.2}
-  .num{font-size:20px;overflow-wrap:anywhere}
+  .cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-bottom:8px}
+  .card{height:auto;min-height:50px;padding:5px 3px;border-radius:7px;box-shadow:0 1px 4px rgba(25,54,79,.04)}
+  .label{font-size:8px;white-space:normal;line-height:1.1;letter-spacing:0}
+  .num{font-size:14px;line-height:1.05;margin-top:3px;overflow-wrap:anywhere}
   .tabs{display:flex;justify-content:flex-start;gap:7px;overflow-x:auto;flex-wrap:nowrap;padding:2px 0 9px;margin-bottom:8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
   .tab{min-height:42px;height:auto;padding:9px 13px;font-size:12px;scroll-snap-align:start}
   .toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:10px;overflow:visible;justify-content:stretch}
@@ -83,9 +83,10 @@ td:first-child{font-weight:500}
   th{top:0;min-width:90px}
 }
 @media(max-width:380px){
-  .cards{gap:6px}
-  .card{min-height:66px}
-  .num{font-size:18px}
+  .cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+  .card{min-height:46px;padding:4px 2px}
+  .label{font-size:7px}
+  .num{font-size:12px}
   .toolbar{padding:8px;gap:7px}
   .tab{padding:8px 11px}
 }
