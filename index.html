@@ -52,9 +52,16 @@ td:not(:first-child){font-size:clamp(8px,0.72vw,10px);letter-spacing:-.05px}
 td:first-child{font-weight:500}
 .negative{color:var(--red);font-weight:700}.positive{color:var(--green);font-weight:700}.rank{font-weight:700}
 @media(min-width:701px){
-  /* Desktop: keep Markaz/other tables fully inside the dashboard; no horizontal drag bar. */
-  .tablebox{overflow-x:hidden;overflow-y:auto}
-  table{width:100%;min-width:0;table-layout:fixed}
+  /* Desktop: everything fits the dashboard width; no horizontal drag/scroll bars. */
+  html,body{overflow-x:hidden}
+  .wrap{width:100%;max-width:var(--content);overflow-x:hidden}
+  .tabs{overflow-x:hidden;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .toolbar{overflow-x:hidden;scrollbar-width:none}
+  .toolbar::-webkit-scrollbar{display:none}
+  .tablebox{width:100%;max-width:100%;overflow-x:hidden;overflow-y:auto;scrollbar-width:auto}
+  .tablebox::-webkit-scrollbar:horizontal{height:0}
+  table{width:100%;min-width:0;max-width:100%;table-layout:fixed}
   th,td{padding:7px 3px;font-size:9px;line-height:1.2;overflow-wrap:anywhere;word-break:break-word}
   td:not(:first-child){font-size:9px;letter-spacing:-.15px}
   th:first-child,td:first-child{width:16%;max-width:190px}
