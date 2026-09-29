@@ -62,12 +62,12 @@ td:first-child{font-weight:500}
 <div id="app" style="display:none">
 <div class="cards" id="cards"></div>
 <div class="tabs">
-<button class="tab active" data-view="school">School Wise</button><button class="tab" data-view="markaz">Markaz Wise</button><button class="tab" data-view="tehsil">Tehsil Wise</button><button class="tab" data-view="wing">Wing Wise</button><button class="tab" data-view="lowSchools">Low Performing Schools</button>
+<button class="tab active" data-view="school">School Wise</button><button class="tab" data-view="markaz">Markaz Wise</button><button class="tab" data-view="tehsil">Tehsil Wise</button><button class="tab" data-view="wing">Wing Wise</button><button class="tab" data-view="lowMarkaz">Low Performing Markaz</button><button class="tab" data-view="highMarkaz">High Performing Markaz</button><button class="tab" data-view="lowSchools">Low Performing Schools</button><button class="tab" data-view="highSchools">High Performing Schools</button>
 </div>
 <div class="toolbar">
 <input id="search" placeholder="Search school / markaz / tehsil / EMIS">
 <select id="tehsilFilter"><option value="">All Tehsils</option></select><select id="wingFilter"><option value="">All Wings</option></select>
-<select id="lowCount" title="Low Performing Schools"><option value="10">Lowest 10</option><option value="20">Lowest 20</option><option value="30">Lowest 30</option><option value="50" selected>Lowest 50</option></select><button class="action" id="downloadExcel">Download Excel</button><button class="action pdf" id="downloadPDF">Download PDF</button>
+<select id="markazFilter" title="Select Markaz"><option value="">All Markaz</option></select><button class="action" id="downloadExcel">Download Excel</button><button class="action pdf" id="downloadPDF">Download PDF</button>
 </div>
 <div class="note"><b>Performance rule:</b> <span class="positive">Green = On Target</span> • <span class="negative">Red = Target Not achieved</span>.</div><div class="tablebox"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
 </div></div>
@@ -98,7 +98,7 @@ function aggregate(list,field){
  let a=m.get(k);a.schools++;['male','female','other','total','maleTarget','femaleTarget','totalTarget'].forEach(x=>a[x]+=r[x]);});
  return [...m.values()].map(a=>({...a,maleDiff:a.male-a.maleTarget,femaleDiff:a.female-a.femaleTarget,totalDiff:a.total-a.totalTarget,remainingBoys:a.male-a.maleTarget,remainingGirls:a.female-a.femaleTarget,remainingTotal:a.total-a.totalTarget,achievement:pct(a.total,a.totalTarget)}));
 }
-function filtered(){let s=document.getElementById('search').value.toLowerCase(),t=document.getElementById('tehsilFilter').value,w=document.getElementById('wingFilter').value;return rows.filter(r=>(!s||[r.school,r.markaz,r.tehsil,r.emis].some(x=>String(x).toLowerCase().includes(s)))&&(!t||r.tehsil===t)&&(!w||r.wing===w))}
+function filtered(){let s=document.getElementById('search').value.toLowerCase(),t=document.getElementById('tehsilFilter').value,w=document.getElementById('wingFilter').value,m=document.getElementById('markazFilter').value;return rows.filter(r=>(!s||[r.school,r.markaz,r.tehsil,r.emis].some(x=>String(x).toLowerCase().includes(s)))&&(!t||r.tehsil===t)&&(!w||r.wing===w)&&(!m||r.markaz===m))}
 function renderCards(){
  const list=filtered();
  const a=list.reduce((z,r)=>{
@@ -115,9 +115,11 @@ function sumTable(list,title){return{headers:[title,'Schools','Boys Enr.','Targe
 function tableData(){
  let f=filtered();
  if(currentView==='school')return schoolTable([...f].sort((a,b)=>b.achievement-a.achievement));
- if(currentView==='lowSchools'){
-   const n=Math.max(1,Math.min(50,Number(document.getElementById('lowCount')?.value||50)));
-   return schoolTable([...f].sort((a,b)=>a.achievement-b.achievement).slice(0,n));
+ if(currentView==='lowSchools')return schoolTable([...f].sort((a,b)=>a.achievement-b.achievement));
+ if(currentView==='highSchools')return schoolTable([...f].sort((a,b)=>b.achievement-a.achievement));
+ if(currentView==='lowMarkaz'||currentView==='highMarkaz'){
+   const a=aggregate(f,'markaz').sort((x,y)=>currentView==='lowMarkaz'?x.achievement-y.achievement:y.achievement-x.achievement);
+   return sumTable(a,'Markaz');
  }
  let field=currentView==='markaz'?'markaz':currentView==='tehsil'?'tehsil':'wing';
  let a=aggregate(f,field).sort((x,y)=>y.achievement-x.achievement);
@@ -127,17 +129,17 @@ function render(){
  renderCards();let td=tableData();document.getElementById('thead').innerHTML='<tr>'+td.headers.map(h=>`<th>${h}</th>`).join('')+'</tr>';
  document.getElementById('tbody').innerHTML=td.data.map(r=>'<tr>'+r.map((v,i)=>`<td class="${(td.headers[i]||'').includes('Remaining')?cls(Number(v)):''}">${typeof v==='number'?fmt(v):v}</td>`).join('')+'</tr>').join('');
 document.querySelectorAll('#tbody td:not(:first-child), #thead th:not(:first-child)').forEach(el=>{el.style.setProperty('text-align','center','important');el.style.setProperty('vertical-align','middle','important');});
- const labels={school:'School Wise',markaz:'Markaz Wise',tehsil:'Tehsil Wise',wing:'Wing Wise',top10markaz:'Top 10 Markaz',last10markaz:'Last 10 Markaz',lowSchools:'Low Performing Schools'};
+ const labels={school:'School Wise',markaz:'Markaz Wise',tehsil:'Tehsil Wise',wing:'Wing Wise',lowMarkaz:'Low Performing Markaz',highMarkaz:'High Performing Markaz',lowSchools:'Low Performing Schools',highSchools:'High Performing Schools'};
  
 }
-function fillFilters(){let ts=[...new Set(rows.map(r=>r.tehsil).filter(Boolean))].sort(),ws=[...new Set(rows.map(r=>r.wing).filter(Boolean))].sort();document.getElementById('tehsilFilter').innerHTML='<option value="">All Tehsils</option>'+ts.map(x=>`<option>${x}</option>`).join('');document.getElementById('wingFilter').innerHTML='<option value="">All Wings</option>'+ws.map(x=>`<option>${x}</option>`).join('')}
+function fillFilters(){let ts=[...new Set(rows.map(r=>r.tehsil).filter(Boolean))].sort(),ws=[...new Set(rows.map(r=>r.wing).filter(Boolean))].sort(),ms=[...new Set(rows.map(r=>r.markaz).filter(Boolean))].sort();document.getElementById('tehsilFilter').innerHTML='<option value="">All Tehsils</option>'+ts.map(x=>`<option value="${x}">${x}</option>`).join('');document.getElementById('wingFilter').innerHTML='<option value="">All Wings</option>'+ws.map(x=>`<option value="${x}">${x}</option>`).join('');document.getElementById('markazFilter').innerHTML='<option value="">All Markaz</option>'+ms.map(x=>`<option value="${x}">${x}</option>`).join('')}
 function fileSafe(s){return String(s||'All').replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'_').replace(/_+/g,'_')}
 function stampNow(){
  const d=new Date(),p=n=>String(n).padStart(2,'0');
  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}-${p(d.getSeconds())}`;
 }
 function reportLabel(){
- const labels={school:'School_Wise',markaz:'Markaz_Wise',tehsil:'Tehsil_Wise',wing:'Wing_Wise',top10markaz:'Top10_Markaz',last10markaz:'Last10_Markaz',lowSchools:'Low_Performing_Schools'};
+ const labels={school:'School_Wise',markaz:'Markaz_Wise',tehsil:'Tehsil_Wise',wing:'Wing_Wise',lowMarkaz:'Low_Performing_Markaz',highMarkaz:'High_Performing_Markaz',lowSchools:'Low_Performing_Schools',highSchools:'High_Performing_Schools'};
  return labels[currentView]||'Report';
 }
 function reportSuffix(){
@@ -195,13 +197,16 @@ function exportPDF(){
       z.maleTarget+=Number(r.maleTarget)||0; z.femaleTarget+=Number(r.femaleTarget)||0; z.totalTarget+=Number(r.totalTarget)||0;
       return z;
     },{schools:0,male:0,female:0,total:0,maleTarget:0,femaleTarget:0,totalTarget:0});
-    const isSchool=currentView==='school'||currentView==='lowSchools';
+    const isSchool=currentView==='school'||currentView==='lowSchools'||currentView==='highSchools';
     const groupField=(currentView==='markaz'||currentView==='top10markaz'||currentView==='last10markaz')?'markaz':currentView==='tehsil'?'tehsil':isSchool?'school':'wing';
     const groupLabel=groupField==='markaz'?'MARKAZ-WISE':groupField==='tehsil'?'TEHSIL-WISE':isSchool?'SCHOOL-WISE':'WING-WISE';
     let dataRows=isSchool?list.map(r=>({...r,name:r.school,remainingBoys:r.male-r.maleTarget,remainingGirls:r.female-r.femaleTarget,remainingTotal:r.total-r.totalTarget,achievement:Number(r.achievement)||0})):aggregate(list,groupField).sort((a,b)=>b.achievement-a.achievement); dataRows.sort((a,b)=>Number(b.achievement||0)-Number(a.achievement||0));
     if(currentView==='top10markaz') dataRows=dataRows.slice(0,10);
     if(currentView==='last10markaz') dataRows=dataRows.slice(-10);
-    if(currentView==='lowSchools') dataRows=dataRows.sort((a,b)=>a.achievement-b.achievement).slice(0,Math.max(1,Math.min(50,Number(document.getElementById('lowCount')?.value||50))));
+    if(currentView==='lowSchools') dataRows=dataRows.sort((a,b)=>a.achievement-b.achievement);
+    if(currentView==='highSchools') dataRows=dataRows.sort((a,b)=>b.achievement-a.achievement);
+    if(currentView==='lowMarkaz') dataRows=dataRows.sort((a,b)=>a.achievement-b.achievement);
+    if(currentView==='highMarkaz') dataRows=dataRows.sort((a,b)=>b.achievement-a.achievement);
     const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
     const W=842,H=595,M=28,C=W-2*M,navy=[25,50,88],light=[244,247,250],line=[185,195,208],green=[31,130,86],red=[190,48,48],yellow=[226,177,35],textc=[45,55,68],muted=[92,105,122];
     const fmt=v=>Number(v||0).toLocaleString('en-US');
@@ -264,8 +269,11 @@ function exportPDF(){
     dataRows.forEach((r,i)=>drawRow(r,i));
     const totalRowH=20;
     if(y+totalRowH+8<=H-48){
-      doc.setFillColor(232,238,245);doc.setDrawColor(...line);doc.setLineWidth(.7);doc.rect(M,y,tableW,totalRowH,'FD');doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(...navy);doc.text('TOTAL',M+5,y+14);
-      let x=M+widths[0];totalCells.forEach((v,k)=>{const col=k+1;doc.setTextColor(...((col===4||col===7||col===10)?(Number(v)<0?red:green):col===11?green:navy));doc.text(String(typeof v==='number'?fmt(v):v),x+widths[col]/2,y+14,{align:'center'});doc.setDrawColor(...line);doc.rect(x,y,widths[col],totalRowH,'S');x+=widths[col];});
+      doc.setFillColor(232,238,245);doc.setDrawColor(...line);doc.setLineWidth(.7);doc.rect(M,y,tableW,totalRowH,'FD');doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(...navy);
+      const labelCols=isSchool?2:1;doc.text('TOTAL',M+5,y+14);
+      let x=M+widths[0];
+      if(isSchool){doc.setDrawColor(...line);doc.rect(x,y,widths[1],totalRowH,'S');x+=widths[1];}
+      totalCells.forEach((v,k)=>{const col=k+labelCols;doc.setTextColor(...((String(headers[col]||'').includes('Remaining')&&Number(v)<0)?red:String(headers[col]||'').includes('Remaining')?green:col===headers.length-1?green:navy));doc.text(String(typeof v==='number'?fmt(v):v),x+widths[col]/2,y+14,{align:'center'});doc.setDrawColor(...line);doc.rect(x,y,widths[col],totalRowH,'S');x+=widths[col];});
       doc.setDrawColor(...line);doc.rect(M,y,widths[0],totalRowH,'S');y+=totalRowH+20;
     }
     if(currentView==='wing'||currentView==='tehsil'){
@@ -306,5 +314,5 @@ async function loadLiveData(){
 }
 loadLiveData();
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentView=b.dataset.view;render()}));
-['search','tehsilFilter','wingFilter','lowCount'].forEach(id=>document.getElementById(id).addEventListener('input',render));document.getElementById('downloadExcel').onclick=exportRows;document.getElementById('downloadPDF').onclick=exportPDF;
+['search','tehsilFilter','wingFilter','markazFilter'].forEach(id=>document.getElementById(id).addEventListener('input',render));document.getElementById('downloadExcel').onclick=exportRows;document.getElementById('downloadPDF').onclick=exportPDF;
 </script></body></html>
