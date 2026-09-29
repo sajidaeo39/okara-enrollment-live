@@ -306,22 +306,30 @@ function exportPDF(){
     };
     dataRows.forEach((r,i)=>drawRow(r,i));
     const totalRowH=20;
-    // Always print Grand Total, moving it to a fresh page when needed.
+    // Draw a column-aligned Grand Total row, with a dedicated Markaz-wise layout.
     if(y+totalRowH+8>H-48){footer(page);doc.addPage();page++;drawTop();y=drawTableHeading(96);}
-    doc.setFillColor(232,238,245);doc.setDrawColor(...line);doc.setLineWidth(.7);doc.rect(M,y,tableW,totalRowH,'FD');doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(...navy);
+    doc.setFillColor(232,238,245);doc.setDrawColor(...line);doc.setLineWidth(.7);doc.rect(M,y,tableW,totalRowH,'FD');
+    doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(...navy);
+    const totalsByHeader={
+      'schools':sum.schools,
+      'boys enr.':sum.male,'target boys':sum.maleTarget,'remaining boys':sum.male-sum.maleTarget,
+      'girls enr.':sum.female,'target girls':sum.femaleTarget,'remaining girls':sum.female-sum.femaleTarget,
+      'total enr.':sum.total,'total target':sum.totalTarget,'remaining total':remaining,'achievement':ach.toFixed(1)+'%'
+    };
     const labelCols=(isSchool||addNo)?2:1;
     let labelWidth=0;for(let j=0;j<labelCols;j++)labelWidth+=widths[j];
     doc.text('GRAND TOTAL',M+5,y+14);
     doc.setDrawColor(...line);doc.rect(M,y,labelWidth,totalRowH,'S');
     let x=M+labelWidth;
-    totalCells.forEach((v,k)=>{
-      const col=k+labelCols;
-      if(col>=widths.length)return;
-      const head=String(headers[col]||'');
-      doc.setTextColor(...(head.includes('Remaining')?(Number(v)<0?red:green):col===headers.length-1?green:navy));
+    for(let col=labelCols;col<headers.length;col++){
+      const key=String(headers[col]||'').trim().toLowerCase();
+      const v=Object.prototype.hasOwnProperty.call(totalsByHeader,key)?totalsByHeader[key]:'';
+      if(key.includes('remaining'))doc.setTextColor(...(Number(v)<0?red:green));
+      else if(key==='achievement')doc.setTextColor(...green);
+      else doc.setTextColor(...navy);
       doc.text(String(typeof v==='number'?fmt(v):v),x+widths[col]/2,y+14,{align:'center',maxWidth:widths[col]-3});
       doc.setDrawColor(...line);doc.rect(x,y,widths[col],totalRowH,'S');x+=widths[col];
-    });
+    }
     y+=totalRowH+20;
     if(currentView==='wing'||currentView==='tehsil'){
       if(y+90>H-48){footer(page);doc.addPage();page++;drawTop();y=96;}
