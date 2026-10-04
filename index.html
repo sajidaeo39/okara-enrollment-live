@@ -396,7 +396,7 @@ function exportPDF(){
       
     }
     footer(page);
-    const shortName=()=>{const t=getVal('tehsilFilter'),w=getVal('wingFilter'),q=getVal('search');const p=['Enrollment_Report',reportLabel(),w&&'W-'+fileSafe(w),t&&'T-'+fileSafe(t),q&&'S-'+fileSafe(q)].filter(Boolean);return p.join('_')+'_'+stampNow()+'.pdf'}; doc.save(shortName());
+    const shortName=()=>{const t=getVal('tehsilFilter'),w=getVal('wingFilter'),q=getVal('search');const filterName=reportLabel();const p=[filterName,'Enrollment_Report',w&&'W-'+fileSafe(w),t&&'T-'+fileSafe(t),q&&'S-'+fileSafe(q)].filter(Boolean);return p.join('_')+'_'+stampNow()+'.pdf'}; doc.save(shortName());
   }catch(err){console.error('PDF export error:',err);alert('PDF generation failed. Please try again.');}
 }
 async function loadLiveData(){
