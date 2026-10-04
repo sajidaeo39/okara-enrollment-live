@@ -30,8 +30,8 @@ header p{margin:4px 0 0;color:#52657a;font-size:11px;letter-spacing:.15px}
 .card:nth-child(6n){background:#f5f3fb}.card:nth-child(6n) .num{color:#66599c}
 .label{font-size:9.5px;color:#5f7080;font-weight:650;letter-spacing:.05px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .num{font-size:18px;line-height:1.1;font-weight:750;margin-top:4px;text-align:center}
-.tabs{display:flex;gap:7px;flex-wrap:nowrap;overflow-x:auto;justify-content:center;margin:0 0 10px;padding:0 1px;scrollbar-width:thin}
-.tab{background:#fff;border:1px solid #cbd5e1;border-radius:7px;padding:0 13px;height:var(--control-h);min-width:112px;white-space:nowrap;font-size:12px;font-weight:650;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.tabs{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:9px;width:100%;margin:0 0 10px;padding:0;overflow:hidden}
+.tab{background:#fff;border:1px solid #cbd5e1;border-radius:7px;padding:0 6px;height:var(--control-h);min-width:0;width:100%;white-space:nowrap;font-size:11px;font-weight:650;cursor:pointer;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
 .tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
 .toolbar{display:flex;gap:7px;align-items:center;justify-content:center;flex-wrap:nowrap;width:100%;background:#fff;border:1px solid var(--line);padding:9px;border-radius:10px;margin:0 0 10px;box-shadow:0 2px 7px rgba(25,54,79,.04);overflow-x:auto}
 .toolbar input,.toolbar select,.toolbar .action{height:var(--control-h);box-sizing:border-box}
@@ -55,7 +55,7 @@ td:first-child{font-weight:500}
   /* Desktop/laptop: keep a clean bordered content frame like the district dashboard. */
   html,body{overflow-x:hidden}
   .wrap{width:calc(100% - (2 * clamp(18px,3vw,42px)));max-width:1500px;overflow-x:hidden}
-  .tabs{overflow-x:hidden;scrollbar-width:none}
+  .tabs{overflow:hidden}
   .tabs::-webkit-scrollbar{display:none}
   .toolbar{overflow-x:hidden;scrollbar-width:none}
   .toolbar::-webkit-scrollbar{display:none}
