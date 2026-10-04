@@ -233,7 +233,7 @@ function reportSuffix(){
  if(t)f.push('Tehsil-'+fileSafe(t));
  if(w)f.push('Wing-'+fileSafe(w));
  if(q)f.push('Search-'+fileSafe(q));
- return `${reportLabel()}${f.length?'_'+f.join('_'):'_All_Filters'}_${stampNow()}`;
+ return `Enrollment_Report_${reportLabel()}${f.length?'_'+f.join('_'):'_All_Filters'}_${stampNow()}`;
 }
 async function loadWorkbookBuffer(buffer, sourceName){
  const dateMatch=String(sourceName||'').match(/(20\\d{2}[-_]\\d{2}[-_]\\d{2})/);
