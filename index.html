@@ -5,17 +5,17 @@
 <title>Okara Gender Target vs Latest Enrollment</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<style>:root{--blue:#0b5ed7;--dark:#17345f;--bg:#f4f7fb;--card:#fff;--line:#dfe5ee;--muted:#667085;--red:#c62828;--green:#16803c;--content:1180px;--control-h:38px}
+<style>:root{--blue:#0b5ed7;--dark:#17345f;--bg:#f4f7fb;--card:#fff;--line:#dfe5ee;--muted:#667085;--red:#c62828;--green:#16803c;--content:100%;--control-h:38px;--page-gutter:clamp(12px,2.2vw,32px)}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{background:#fff;font-family:Segoe UI,Arial,sans-serif;color:#172033}
 header{background:#fff;color:#17344d;padding:8px 0 9px;box-shadow:0 2px 10px rgba(23,52,77,.055);border-bottom:1px solid #e2eaf2}
 header .wrap{text-align:center}
 header h1{margin:0;font-size:23px;font-weight:750;letter-spacing:.1px;color:#17344d}
-.dashboard-title{text-align:center;line-height:1.2;display:block;max-width:var(--content);margin:0 auto;padding:8px 16px;border:0;border-radius:10px;background:#f4f8fc;box-shadow:none}
+.dashboard-title{text-align:center;line-height:1.2;display:block;max-width:none;margin:0 auto;padding:8px 16px;border:0;border-radius:10px;background:#f4f8fc;box-shadow:none}
 header p{margin:4px 0 0;color:#52657a;font-size:11px;letter-spacing:.15px}
 .byline{font-weight:600;color:#52657a!important;font-size:11px!important;margin-top:4px!important}
-.wrap{max-width:var(--content);margin:auto;padding:8px 12px}
+.wrap{width:calc(100% - (2 * var(--page-gutter)));max-width:none;margin:0 auto;padding:8px 0}
 .upload{background:#fff;border:2px dashed #9db5d8;border-radius:11px;padding:16px;text-align:center;margin-bottom:12px}
 .hint{font-size:12px;color:var(--muted)}
 .cards{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:9px;width:100%;margin:0 0 11px}
@@ -37,7 +37,7 @@ header p{margin:4px 0 0;color:#52657a;font-size:11px;letter-spacing:.15px}
 .toolbar input,.toolbar select,.toolbar .action{height:var(--control-h);box-sizing:border-box}
 .toolbar input,.toolbar select{padding:0 10px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;font:12px Segoe UI,Arial,sans-serif;color:#172033;flex:0 0 auto}
 .toolbar input{min-width:0;width:min(390px,34vw);flex:1 1 390px}
-.toolbar select{min-width:112px;width:112px}
+.toolbar select{min-width:112px;width:112px}.toolbar #schoolLimit{width:130px;min-width:130px}
 .toolbar .action{border:0;border-radius:7px;padding:0 12px;background:#0f766e;color:#fff;font:650 12px Segoe UI,Arial,sans-serif;cursor:pointer;white-space:nowrap;min-width:112px}
 .toolbar .pdf{background:#b42318}
 .note{font-size:11px;color:var(--muted);margin:4px 0 7px}
@@ -95,7 +95,7 @@ td:first-child{font-weight:500}
   .toolbar input,.toolbar select,.toolbar .action{width:100%;min-width:0;max-width:100%;height:39px;font-size:11.5px;border-radius:7px}
   .toolbar input{grid-column:1/-1;flex:none;padding:0 10px}
   #tehsilFilter,#wingFilter{width:100%}
-  #markazFilter{grid-column:1/-1}
+  #markazFilter{grid-column:1/-1}#schoolLimit{grid-column:1/-1;width:100%!important;min-width:0!important}
   .toolbar .action{padding:0 4px;white-space:normal;line-height:1.1;font-weight:700}
   .toolbar #downloadExcel{grid-column:1}
   .toolbar #downloadPDF{grid-column:2}
@@ -135,7 +135,7 @@ td:first-child{font-weight:500}
 <div class="toolbar">
 <input id="search" placeholder="Search school / markaz / tehsil / EMIS">
 <select id="tehsilFilter"><option value="">All Tehsils</option></select><select id="wingFilter"><option value="">All Wings</option></select>
-<select id="markazFilter" title="Select Markaz"><option value="">All Markaz</option></select><button class="action" id="downloadExcel">Download Excel</button><button class="action pdf" id="downloadPDF">Download PDF</button>
+<select id="markazFilter" title="Select Markaz"><option value="">All Markaz</option></select><select id="schoolLimit" title="Schools to show"><option value="">All Schools</option><option value="10">10 Schools</option><option value="25">25 Schools</option><option value="50">50 Schools</option></select><button class="action" id="downloadExcel">Download Excel</button><button class="action pdf" id="downloadPDF">Download PDF</button>
 </div>
 <div class="note"><b>Performance rule:</b> <span class="positive">Green = On Target</span> • <span class="negative">Red = Target Not achieved</span>.</div><div class="tablebox"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
 </div></div>
@@ -182,12 +182,25 @@ function schoolTable(list){return{headers:schoolHeaders,data:list.map(r=>[r.scho
 function sumTable(list,title){return{headers:[title,'Schools','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement'],data:list.map(a=>[a.name,a.schools,a.male,a.maleTarget,a.remainingBoys,a.female,a.femaleTarget,a.remainingGirls,a.total,a.totalTarget,a.remainingTotal,Math.round(a.achievement*10)/10+'%'])}}
 function tableData(){
  let f=filtered();
- if(currentView==='school')return schoolTable([...f].sort((a,b)=>b.achievement-a.achievement));
- if(currentView==='lowSchools')return schoolTable([...f].sort((a,b)=>a.achievement-b.achievement));
- if(currentView==='highSchools')return schoolTable([...f].sort((a,b)=>b.achievement-a.achievement));
+ const limit=Number(document.getElementById('schoolLimit')?.value||0);
+ if(currentView==='school'){
+   let a=[...f].sort((x,y)=>y.achievement-x.achievement);
+   if(limit)a=a.slice(0,limit);
+   return schoolTable(a);
+ }
+ if(currentView==='lowSchools'){
+   let a=[...f].sort((x,y)=>x.achievement-y.achievement);
+   if(limit)a=a.slice(0,limit);
+   return schoolTable(a);
+ }
+ if(currentView==='highSchools'){
+   let a=[...f].sort((x,y)=>y.achievement-x.achievement);
+   if(limit)a=a.slice(0,limit);
+   return schoolTable(a);
+ }
  if(currentView==='lowMarkaz'||currentView==='highMarkaz'){
-   const a=aggregate(f,'markaz').sort((x,y)=>currentView==='lowMarkaz'?x.achievement-y.achievement:y.achievement-x.achievement);
-   return sumTable(a,'Markaz');
+   let a=aggregate(f,'markaz').sort((x,y)=>currentView==='lowMarkaz'?x.achievement-y.achievement:y.achievement-x.achievement);
+   return sumTable(a.slice(0,10),'Markaz');
  }
  let field=currentView==='markaz'?'markaz':currentView==='tehsil'?'tehsil':'wing';
  let a=aggregate(f,field).sort((x,y)=>y.achievement-x.achievement);
@@ -269,12 +282,14 @@ function exportPDF(){
     const groupField=(currentView==='markaz'||currentView==='lowMarkaz'||currentView==='highMarkaz'||currentView==='top10markaz'||currentView==='last10markaz')?'markaz':currentView==='tehsil'?'tehsil':isSchool?'school':'wing';
     const groupLabel=groupField==='markaz'?'MARKAZ-WISE':groupField==='tehsil'?'TEHSIL-WISE':isSchool?'SCHOOL-WISE':'WING-WISE';
     let dataRows=isSchool?list.map(r=>({...r,name:r.school,remainingBoys:r.male-r.maleTarget,remainingGirls:r.female-r.femaleTarget,remainingTotal:r.total-r.totalTarget,achievement:Number(r.achievement)||0})):aggregate(list,groupField).sort((a,b)=>b.achievement-a.achievement); dataRows.sort((a,b)=>Number(b.achievement||0)-Number(a.achievement||0));
+    const pdfSchoolLimit=Number(document.getElementById('schoolLimit')?.value||0);
     if(currentView==='top10markaz') dataRows=dataRows.slice(0,10);
     if(currentView==='last10markaz') dataRows=dataRows.slice(-10);
     if(currentView==='lowSchools') dataRows=dataRows.sort((a,b)=>a.achievement-b.achievement);
     if(currentView==='highSchools') dataRows=dataRows.sort((a,b)=>b.achievement-a.achievement);
-    if(currentView==='lowMarkaz') dataRows=dataRows.sort((a,b)=>a.achievement-b.achievement);
-    if(currentView==='highMarkaz') dataRows=dataRows.sort((a,b)=>b.achievement-a.achievement);
+    if(currentView==='lowMarkaz') dataRows=dataRows.sort((a,b)=>a.achievement-b.achievement).slice(0,10);
+    if(currentView==='highMarkaz') dataRows=dataRows.sort((a,b)=>b.achievement-a.achievement).slice(0,10);
+    if(isSchool && pdfSchoolLimit) dataRows=dataRows.slice(0,pdfSchoolLimit);
     const doc=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
     const W=842,H=595,M=28,C=W-2*M,navy=[25,50,88],light=[244,247,250],line=[185,195,208],green=[31,130,86],red=[190,48,48],yellow=[226,177,35],textc=[45,55,68],muted=[92,105,122];
     const fmt=v=>Number(v||0).toLocaleString('en-US');
@@ -399,5 +414,5 @@ async function loadLiveData(){
 }
 loadLiveData();
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');currentView=b.dataset.view;render()}));
-['search','tehsilFilter','wingFilter','markazFilter'].forEach(id=>document.getElementById(id).addEventListener('input',render));document.getElementById('downloadExcel').onclick=exportRows;document.getElementById('downloadPDF').onclick=exportPDF;
+['search','tehsilFilter','wingFilter','markazFilter','schoolLimit'].forEach(id=>document.getElementById(id).addEventListener('input',render));document.getElementById('downloadExcel').onclick=exportRows;document.getElementById('downloadPDF').onclick=exportPDF;
 </script></body></html>
