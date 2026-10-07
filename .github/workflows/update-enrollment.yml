@@ -2,7 +2,7 @@ name: Update Okara Enrollment
 
 on:
   schedule:
-    - cron: "15 7 * * *"
+    - cron: "0 7 * * *"
       timezone: "Asia/Karachi"
   workflow_dispatch:
   push:
