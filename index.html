@@ -181,9 +181,9 @@ function renderCards(){
  const cards=[['Schools',a.schools],['Boys Enrollment',a.male],['Target Boys',a.maleTarget],['Remaining Boys',a.male-a.maleTarget],['Girls Enrollment',a.female],['Target Girls',a.femaleTarget],['Remaining Girls',a.female-a.femaleTarget],['Remaining Total Target',a.total-a.totalTarget]];
  document.getElementById('cards').innerHTML=cards.map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="num ${x[0].includes('Remaining')?cls(x[1]):''}">${fmt(x[1])}</div></div>`).join('');
 }
-const schoolHeaders=['S.No.','School','EMIS','Tehsil','Markaz','Wing','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement'];
+const schoolHeaders=['S.No.','School','EMIS','Tehsil','Markaz','Wing','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','2026 Target Achieved'];
 function schoolTable(list){return{headers:schoolHeaders,data:list.map((r,i)=>[i+1,r.school,r.emis,r.tehsil,r.markaz,r.wing,r.male,r.maleTarget,r.remainingBoys,r.female,r.femaleTarget,r.remainingGirls,r.total,r.totalTarget,r.remainingTotal,Math.round(r.achievement*10)/10+'%'])}}
-function sumTable(list,title){return{headers:['S.No.',title,'Schools','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement'],data:list.map((a,i)=>[i+1,a.name,a.schools,a.male,a.maleTarget,a.remainingBoys,a.female,a.femaleTarget,a.remainingGirls,a.total,a.totalTarget,a.remainingTotal,Math.round(a.achievement*10)/10+'%'])}}
+function sumTable(list,title){return{headers:['S.No.',title,'Schools','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','2026 Target Achieved'],data:list.map((a,i)=>[i+1,a.name,a.schools,a.male,a.maleTarget,a.remainingBoys,a.female,a.femaleTarget,a.remainingGirls,a.total,a.totalTarget,a.remainingTotal,Math.round(a.achievement*10)/10+'%'])}}
 function tableData(){
  let f=filtered();
  const limit=Number(document.getElementById('schoolLimit')?.value||0);
@@ -300,7 +300,7 @@ function exportPDF(){
     const W=842,H=595,M=28,C=W-2*M,navy=[25,50,88],light=[244,247,250],line=[185,195,208],green=[31,130,86],red=[190,48,48],yellow=[226,177,35],textc=[45,55,68],muted=[92,105,122];
     const fmt=v=>Number(v||0).toLocaleString('en-US');
     const ach=sum.totalTarget?sum.total/sum.totalTarget*100:0,remaining=sum.total-sum.totalTarget;
-    const addNo=true; const headers=isSchool?['No.','School','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement']:['No.',groupField==='markaz'?'Markaz':groupField==='tehsil'?'Tehsil':'Wing','Schools','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement'];
+    const addNo=true; const headers=isSchool?['No.','School','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','2026 Target Achieved']:['No.',groupField==='markaz'?'Markaz':groupField==='tehsil'?'Tehsil':'Wing','Schools','Boys Enr.','Target Boys','Remaining Boys','Girls Enr.','Target Girls','Remaining Girls','Total Enr.','Total Target','Remaining Total','Achievement'];
     const widthParts=addNo?(isSchool?[0.035,0.195,0.078,0.078,0.082,0.078,0.078,0.082,0.078,0.082,0.078,0.056]:[0.035,0.16,0.05,0.07,0.07,0.075,0.07,0.07,0.075,0.07,0.075,0.08,0.06]):(groupField==='tehsil'?[0.19,0.055,0.075,0.075,0.08,0.075,0.075,0.08,0.075,0.08,0.08,0.06]:[0.19,0.055,0.075,0.075,0.08,0.075,0.075,0.08,0.075,0.08,0.08,0.06]);
     const widthSum=widthParts.reduce((a,b)=>a+b,0); const widths=widthParts.map(v=>v/widthSum*C); const tableW=C;
     const totalCells=isSchool?[sum.male,sum.maleTarget,sum.male-sum.maleTarget,sum.female,sum.femaleTarget,sum.female-sum.femaleTarget,sum.total,sum.totalTarget,remaining,ach.toFixed(1)+'%']:[sum.schools,sum.male,sum.maleTarget,sum.male-sum.maleTarget,sum.female,sum.femaleTarget,sum.female-sum.femaleTarget,sum.total,sum.totalTarget,remaining,ach.toFixed(1)+'%'];
@@ -365,7 +365,7 @@ function exportPDF(){
       'schools':sum.schools,
       'boys enr.':sum.male,'target boys':sum.maleTarget,'remaining boys':sum.male-sum.maleTarget,
       'girls enr.':sum.female,'target girls':sum.femaleTarget,'remaining girls':sum.female-sum.femaleTarget,
-      'total enr.':sum.total,'total target':sum.totalTarget,'remaining total':remaining,'achievement':ach.toFixed(1)+'%'
+      'total enr.':sum.total,'total target':sum.totalTarget,'remaining total':remaining,'2026 target achieved':ach.toFixed(1)+'%'
     };
     const labelCols=(isSchool||addNo)?2:1;
     let labelWidth=0;for(let j=0;j<labelCols;j++)labelWidth+=widths[j];
@@ -384,7 +384,7 @@ function exportPDF(){
     y+=totalRowH+20;
     if(currentView==='wing'||currentView==='tehsil'){
       if(y+90>H-48){footer(page);doc.addPage();page++;drawTop();y=96;}
-      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...navy);doc.text(groupLabel+' ACHIEVEMENT',W/2,y,{align:'center'});doc.setDrawColor(...line);doc.setLineWidth(.8);doc.line(W-M-115,y-3,W-M,y-3);y+=18;
+      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...navy);doc.text(groupLabel+' 2026 TARGET ACHIEVED',W/2,y,{align:'center'});doc.setDrawColor(...line);doc.setLineWidth(.8);doc.line(W-M-115,y-3,W-M,y-3);y+=18;
       const maxAch=dataRows.length?Math.max(...dataRows.map(r=>Number(r.achievement)||0)):0;
       const minAch=dataRows.length?Math.min(...dataRows.map(r=>Number(r.achievement)||0)):0;
       dataRows.forEach((r,i)=>{
