@@ -1,4 +1,5 @@
 name: Update Okara Enrollment
+# fresh SIS run trigger
 
 on:
   schedule:
