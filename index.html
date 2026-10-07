@@ -433,19 +433,20 @@ async function loadBaselineData(){
  if(Object.keys(BASELINE_MAP).length<1000) throw new Error('Baseline CSV appears incomplete.');
 }
 async function loadLiveData(){
+ const latest='data/Okara_Latest_Enrollment_Gender_Latest.xlsx';
  try{
    await loadBaselineData();
-   const url='data/Okara_Latest_Enrollment_Gender_Latest.xlsx?ts='+Date.now();
-   const resp=await fetch(url,{cache:'no-store'});
-   if(!resp.ok) throw new Error('Latest workbook not available yet.');
+   const resp=await fetch(latest+'?v='+Date.now(),{cache:'no-store',credentials:'same-origin'});
+   if(!resp.ok) throw new Error('Latest workbook HTTP '+resp.status);
    const buf=await resp.arrayBuffer();
+   if(!buf || buf.byteLength<1000) throw new Error('Latest workbook is empty.');
    await loadWorkbookBuffer(buf,'Okara_Latest_Enrollment_Gender_Latest.xlsx');
-   status.textContent='LIVE • Latest SIS report: '+(reportDateTime||reportDate); document.getElementById('headerLatest').textContent='Latest SIS report: '+(reportDateTime||reportDate);
-   
+   status.textContent='LIVE • Latest SIS report: '+(reportDateTime||reportDate);
+   document.getElementById('headerLatest').textContent='Latest SIS report: '+(reportDateTime||reportDate);
  }catch(err){
-   document.getElementById('headerLatest').textContent='Latest SIS report: Data not available';
-   
-   console.error(err);
+   console.error('Live SIS load failed:',err);
+   document.getElementById('headerLatest').textContent='Latest SIS report: Data unavailable';
+   document.getElementById('status').textContent='SIS data could not be loaded. Please refresh.';
  }
 }
 loadLiveData();
