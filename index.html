@@ -433,7 +433,7 @@ async function loadBaselineData(){
  if(Object.keys(BASELINE_MAP).length<1000) throw new Error('Baseline CSV appears incomplete.');
 }
 async function loadLiveData(){
- const latest='data/Okara_Latest_Enrollment_Gender_Latest.xlsx';
+ const latest='https://raw.githubusercontent.com/sajidaeo39/okara-enrollment-live/main/data/Okara_Latest_Enrollment_Gender_Latest.xlsx';
  try{
    await loadBaselineData();
    const resp=await fetch(latest+'?v='+Date.now(),{cache:'no-store',credentials:'same-origin'});
