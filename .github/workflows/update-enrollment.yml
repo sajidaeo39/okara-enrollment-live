@@ -2,7 +2,7 @@ name: Update Okara Enrollment
 
 on:
   schedule:
-    - cron: "10 3,9,15,21 * * *"
+    - cron: "0 1,2,3,4 * * *"
   workflow_dispatch:
 
 permissions:
