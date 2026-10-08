@@ -417,42 +417,26 @@ function exportPDF(){
     const shortName=()=>{const t=getVal('tehsilFilter'),w=getVal('wingFilter'),q=getVal('search');const filterName=reportLabel();const p=[filterName,'Enrollment_Report',w&&'W-'+fileSafe(w),t&&'T-'+fileSafe(t),q&&'S-'+fileSafe(q)].filter(Boolean);return p.join('_')+'_'+stampNow()+'.pdf'}; doc.save(shortName());
   }catch(err){console.error('PDF export error:',err);alert('PDF generation failed. Please try again.');}
 }
-async function loadBaselineData(){
- const resp=await fetch('data/districts_enrollment.csv?ts='+Date.now(),{cache:'no-store'});
- if(!resp.ok) throw new Error('Baseline/2026 target CSV not available.');
- const text=await resp.text();
- const wb=XLSX.read(text,{type:'string'});
- const sheet=wb.Sheets[wb.SheetNames[0]];
- const raw=XLSX.utils.sheet_to_json(sheet,{defval:''});
- BASELINE_MAP={};
- raw.forEach(o=>{
-   const emis=String(o['EMIS']??'').trim();
-   if(!emis)return;
-   BASELINE_MAP[emis]={maleBaseline:num(o['Male Baseline']),maleTarget:num(o['Male Target']),male2026Target:num(o['2026 Boys target']),femaleBaseline:num(o['Female Baseline']),femaleTarget:num(o['Female Target']),female2026Target:num(o['2026 Girls Target']),totalBaseline:num(o['Total Baseline']),total2026Target:num(o['2026 Target']),totalTarget:num(o['Total Target'])};
- });
- if(Object.keys(BASELINE_MAP).length<1000) throw new Error('Baseline CSV appears incomplete.');
-}
 async function loadLiveData(){
- const latest='https://raw.githubusercontent.com/sajidaeo39/okara-enrollment-live/main/data/Okara_Latest_Enrollment_Gender_Latest.json';
+ const latest='https://raw.githubusercontent.com/sajidaeo39/okara-enrollment-live/main/data/Okara_Live_Combined.json';
  try{
-  await loadBaselineData();
   const resp=await fetch(latest+'?v='+Date.now(),{cache:'no-store'});
-  if(!resp.ok) throw new Error('Latest JSON HTTP '+resp.status);
+  if(!resp.ok) throw new Error('Live data HTTP '+resp.status);
   const raw=await resp.json();
-  if(!Array.isArray(raw)||!raw.length) throw new Error('Latest JSON is empty.');
-  const d=raw[0]?.['Run Date'];
-  if(d){const dt=new Date(d); if(!isNaN(dt)){reportDate=dt.toLocaleDateString('en-CA',{timeZone:'Asia/Karachi'});reportDateTime=dt.toLocaleDateString('en-GB',{timeZone:'Asia/Karachi'})+' '+dt.toLocaleTimeString('en-US',{timeZone:'Asia/Karachi',hour12:true});}}
+  if(!Array.isArray(raw)||raw.length<1000) throw new Error('Live data incomplete: '+(raw.length||0)+' schools');
+  const first=raw[0]||{}, d=first['Run Date'];
+  if(d){const dt=new Date(d);if(!isNaN(dt)){reportDate=dt.toLocaleDateString('en-CA',{timeZone:'Asia/Karachi'});reportDateTime=dt.toLocaleDateString('en-GB',{timeZone:'Asia/Karachi'})+' '+dt.toLocaleTimeString('en-US',{timeZone:'Asia/Karachi',hour12:true});}}
   rows=normalize(raw);
-  if(!rows.length) throw new Error('No school rows found.');
+  if(rows.length<1000) throw new Error('Normalized data incomplete: '+rows.length);
   document.getElementById('app').style.display='block';
   fillFilters(); render();
   const latestText=reportDateTime||reportDate||'Live';
-  const h=document.getElementById('headerLatest'); if(h) h.textContent='Latest SIS report: '+latestText;
-  const st=document.getElementById('status'); if(st) st.textContent='LIVE • Latest SIS report: '+latestText;
+  document.getElementById('headerLatest').textContent='Latest SIS report: '+latestText;
+  const st=document.getElementById('status');if(st)st.textContent='LIVE • Latest SIS report: '+latestText;
  }catch(err){
-  console.error('Live SIS load failed:',err);
-  const h=document.getElementById('headerLatest'); if(h) h.textContent='Latest SIS report: Data unavailable';
-  const st=document.getElementById('status'); if(st) st.textContent='SIS data could not be loaded. Please refresh.';
+  console.error('Live data load failed:',err);
+  document.getElementById('headerLatest').textContent='Latest SIS report: Data unavailable';
+  const st=document.getElementById('status');if(st)st.textContent='SIS data could not be loaded. '+err.message;
  }
 }
 loadLiveData();
