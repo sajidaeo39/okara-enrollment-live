@@ -411,7 +411,8 @@ def main():
                 report_markaz = "SECONDARY-WING" if w == "Secondary Wing" else mname
                 report_markaz_id = "SECONDARY-WING" if w == "Secondary Wing" else mid
                 try:
-                    local_s = new_session()
+                    local_s = requests.Session()
+                    local_s.headers.update({"User-Agent": UA})
                     en, _ = get_enrollment(local_s, tid, mid, sid)
                     return ("ok", item, (w, report_markaz, report_markaz_id), en)
                 except Exception as e:
