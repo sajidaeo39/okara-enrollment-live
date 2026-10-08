@@ -433,20 +433,26 @@ async function loadBaselineData(){
  if(Object.keys(BASELINE_MAP).length<1000) throw new Error('Baseline CSV appears incomplete.');
 }
 async function loadLiveData(){
- const latest='https://raw.githubusercontent.com/sajidaeo39/okara-enrollment-live/main/data/Okara_Latest_Enrollment_Gender_Latest.xlsx';
+ const latest='https://raw.githubusercontent.com/sajidaeo39/okara-enrollment-live/main/data/Okara_Latest_Enrollment_Gender_Latest.json';
  try{
-   await loadBaselineData();
-   const resp=await fetch(latest+'?v='+Date.now(),{cache:'no-store',credentials:'same-origin'});
-   if(!resp.ok) throw new Error('Latest workbook HTTP '+resp.status);
-   const buf=await resp.arrayBuffer();
-   if(!buf || buf.byteLength<1000) throw new Error('Latest workbook is empty.');
-   await loadWorkbookBuffer(buf,'Okara_Latest_Enrollment_Gender_Latest.xlsx');
-   const st=document.getElementById('status'); if(st) st.textContent='LIVE • Latest SIS report: '+(reportDateTime||reportDate);
-   document.getElementById('headerLatest').textContent='Latest SIS report: '+(reportDateTime||reportDate);
+  await loadBaselineData();
+  const resp=await fetch(latest+'?v='+Date.now(),{cache:'no-store'});
+  if(!resp.ok) throw new Error('Latest JSON HTTP '+resp.status);
+  const raw=await resp.json();
+  if(!Array.isArray(raw)||!raw.length) throw new Error('Latest JSON is empty.');
+  const d=raw[0]?.['Run Date'];
+  if(d){const dt=new Date(d); if(!isNaN(dt)){reportDate=dt.toLocaleDateString('en-CA',{timeZone:'Asia/Karachi'});reportDateTime=dt.toLocaleDateString('en-GB',{timeZone:'Asia/Karachi'})+' '+dt.toLocaleTimeString('en-US',{timeZone:'Asia/Karachi',hour12:true});}}
+  rows=normalize(raw);
+  if(!rows.length) throw new Error('No school rows found.');
+  document.getElementById('app').style.display='block';
+  fillFilters(); render();
+  const latestText=reportDateTime||reportDate||'Live';
+  const h=document.getElementById('headerLatest'); if(h) h.textContent='Latest SIS report: '+latestText;
+  const st=document.getElementById('status'); if(st) st.textContent='LIVE • Latest SIS report: '+latestText;
  }catch(err){
-   console.error('Live SIS load failed:',err);
-   document.getElementById('headerLatest').textContent='Latest SIS report: Data unavailable';
-   document.getElementById('status').textContent='SIS data could not be loaded. Please refresh.';
+  console.error('Live SIS load failed:',err);
+  const h=document.getElementById('headerLatest'); if(h) h.textContent='Latest SIS report: Data unavailable';
+  const st=document.getElementById('status'); if(st) st.textContent='SIS data could not be loaded. Please refresh.';
  }
 }
 loadLiveData();
