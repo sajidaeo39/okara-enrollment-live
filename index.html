@@ -172,6 +172,7 @@ function normalize(raw){
   r.newAdmission=r.total-r.totalBaseline; r.remainingBoys=(r.male-r.maleBaseline)-r.male2026Target; r.remainingGirls=(r.female-r.femaleBaseline)-r.female2026Target;
   r.remainingTotal=r.newAdmission-r.total2026Target; r.maleDiff=r.remainingBoys; r.femaleDiff=r.remainingGirls; r.totalDiff=r.remainingTotal; r.achievement=pct(r.newAdmission,r.total2026Target);
   return r;
+});
 }
 function aggregate(list,field){
  let m=new Map();list.forEach(r=>{let k=r[field]||'Unspecified';if(!m.has(k))m.set(k,{name:k,schools:0,male:0,female:0,other:0,total:0,maleBaseline:0,femaleBaseline:0,totalBaseline:0,maleTarget:0,femaleTarget:0,totalTarget:0,male2026Target:0,female2026Target:0,total2026Target:0,newAdmission:0});
