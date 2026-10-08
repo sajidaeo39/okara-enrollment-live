@@ -144,7 +144,7 @@ td:first-child{font-weight:500}
 </div>
 <div class="note"><b>Performance rule:</b> <span class="positive">Green = On Target</span> • <span class="negative">Red = Target Not achieved</span>.</div><div class="tablebox"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
 </div></div>
-<script src="data/live-data.js?v=20261008142624?v=20261008"></script>
+<script src="data/live-data.js?v=20261008"></script>
 <script>
 (function(){
   try{
@@ -441,11 +441,14 @@ function exportPDF(){
 async function loadLiveData(){
  window.__dashboardBoot.loading=false;
  try{
-  let raw=Array.isArray(window.LIVE_DATA)?window.LIVE_DATA:[];
-  if(raw.length<1000){
+  let raw=[];
+  try{
     const response=await fetch('https://raw.githubusercontent.com/sajidaeo39/okara-enrollment-live/main/data/Okara_Latest_Enrollment_Gender_Latest.json?ts='+Date.now(),{cache:'no-store'});
     if(!response.ok) throw new Error('Latest SIS JSON HTTP '+response.status);
     raw=await response.json();
+  }catch(fetchErr){
+    raw=Array.isArray(window.LIVE_DATA)?window.LIVE_DATA:[];
+    if(raw.length<1000) throw fetchErr;
   }
   if(!Array.isArray(raw)||raw.length<1000) throw new Error('Live data incomplete: '+(raw.length||0)+' schools');
   const d=(raw[0]||{})['Run Date'], dt=d?new Date(d):null;
