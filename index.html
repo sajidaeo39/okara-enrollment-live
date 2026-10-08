@@ -4,6 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Okara Gender Target vs Latest Enrollment</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>window.__dashboardBoot={started:Date.now()};</script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>:root{--blue:#0b5ed7;--dark:#17345f;--bg:#f4f7fb;--card:#fff;--line:#dfe5ee;--muted:#667085;--red:#c62828;--green:#16803c;--content:100%;--control-h:38px;--page-gutter:clamp(12px,2.2vw,32px)}
 *{box-sizing:border-box}
@@ -127,7 +128,7 @@ td:first-child{font-weight:500}
 }
 </style>
 </head>
-<body>
+<body><div id="bootError" style="display:none;position:fixed;z-index:99999;left:12px;right:12px;top:12px;background:#fff3cd;border:1px solid #ffca2c;border-radius:8px;padding:10px;font:14px Arial;color:#664d03">Dashboard loading error. <button onclick="location.reload()">Refresh</button></div>
 <header><div class="wrap"><h1 class="dashboard-title">Gender wise Latest Enrollment District Okara</h1><p>Dashboard developed by M.Sajid AEO Markaz Amli Moti (W)</p><div id="headerLatest" style="margin-top:4px;font-size:12px;font-weight:600;color:#52657a">Latest SIS report: Loading…</div></div></header>
 <div class="wrap">
 
@@ -418,6 +419,7 @@ function exportPDF(){
   }catch(err){console.error('PDF export error:',err);alert('PDF generation failed. Please try again.');}
 }
 async function loadLiveData(){
+ window.__dashboardBoot.loading=true;
  const latest='https://raw.githubusercontent.com/sajidaeo39/okara-enrollment-live/main/data/Okara_Live_Combined.json';
  try{
   const resp=await fetch(latest+'?v='+Date.now(),{cache:'no-store'});
@@ -436,6 +438,7 @@ async function loadLiveData(){
  }catch(err){
   console.error('Live data load failed:',err);
   document.getElementById('headerLatest').textContent='Latest SIS report: Data unavailable';
+  const be=document.getElementById('bootError'); if(be) {be.style.display='block'; be.textContent='Dashboard error: '+err.message+' '; const bt=document.createElement('button'); bt.textContent='Refresh'; bt.onclick=()=>location.reload(); be.appendChild(bt);}
   const st=document.getElementById('status');if(st)st.textContent='SIS data could not be loaded. '+err.message;
  }
 }
