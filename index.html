@@ -414,6 +414,7 @@ function exportPDF(){
   }catch(err){console.error('PDF export error:',err);alert('PDF generation failed. Please try again.');}
 }
 async function loadLiveData(){
+ window.__dashboardBoot=window.__dashboardBoot||{};
  window.__dashboardBoot.loading=false;
  try{
   let raw=[];
