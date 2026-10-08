@@ -158,7 +158,7 @@ const fmt=v=>Math.round(Number(v||0)).toLocaleString();
 const pct=(a,b)=>b?(a/b*100):0;
 const cls=v=>v<0?'negative':v>0?'positive':'';
 
-function targetFor(r){let t=TARGETS.find(x=>x.emis===r.emis)||TARGETS.find(x=>x.school.toLowerCase()===r.school.toLowerCase());return t||{maleTarget:0,femaleTarget:0,totalTarget:0}}
+function targetFor(r){const re=String(r.emis||'').trim();const rs=String(r.school||'').trim().toLowerCase();let t=TARGETS.find(x=>String(x.emis||'').trim()===re);if(!t&&rs)t=TARGETS.find(x=>String(x.school||'').trim().toLowerCase()===rs);return t||{maleTarget:0,femaleTarget:0,totalTarget:0}}
 function normalize(raw){
  return raw.map(o=>{
   let r={emis:String(pick(o,aliases.emis)).trim(),school:String(pick(o,aliases.school)).trim(),tehsil:String(pick(o,aliases.tehsil)).trim(),markaz:String(pick(o,aliases.markaz)).trim(),wing:String(pick(o,aliases.wing)).trim(),male:Math.round(num(pick(o,aliases.male))),female:Math.round(num(pick(o,aliases.female))),other:Math.round(num(pick(o,aliases.other)))};
@@ -426,7 +426,9 @@ async function loadLiveData(){
   const d=(raw[0]||{})['Run Date'], dt=d?new Date(d):null;
   if(dt&&!isNaN(dt)){reportDate=dt.toLocaleDateString('en-CA',{timeZone:'Asia/Karachi'});reportDateTime=dt.toLocaleDateString('en-GB',{timeZone:'Asia/Karachi'})+' '+dt.toLocaleTimeString('en-US',{timeZone:'Asia/Karachi',hour12:true});}
   rows=normalize(raw); if(rows.length<1000) throw new Error('Normalized data incomplete: '+rows.length);
-  document.getElementById('app').style.display='block'; fillFilters(); render();
+  document.getElementById('app').style.display='block';
+  const status0=document.getElementById('status'); if(status0) status0.textContent='LIVE • '+rows.length.toLocaleString()+' schools loaded';
+  fillFilters(); render();
   const latestText=reportDateTime||reportDate||'Live'; document.getElementById('headerLatest').textContent='Latest SIS report: '+latestText;
   const status=document.getElementById('status'); if(status) status.textContent='LIVE • Latest SIS report: '+latestText;
  }catch(err){
