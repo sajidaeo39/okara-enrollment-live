@@ -1,0 +1,17 @@
+name: Syntax Check
+on: [push]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check inline JavaScript
+        run: |
+          python - <<'PY'
+          import re
+          s=open('index.html',encoding='utf-8').read()
+          scripts=re.findall(r'<script(?:\s[^>]*)?>([\s\S]*?)</script>',s)
+          open('/tmp/dashboard.js','w',encoding='utf-8').write(scripts[-1])
+          print('inline script chars:',len(scripts[-1]))
+          PY
+          node --check /tmp/dashboard.js
