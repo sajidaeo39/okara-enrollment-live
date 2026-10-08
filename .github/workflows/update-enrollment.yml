@@ -87,25 +87,33 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Sync to the latest remote commit BEFORE creating the data commit.
+          # This avoids rebase/push conflicts when dashboard files are updated separately.
+          git fetch origin main
+          git reset --mixed origin/main
+
           git add data/
           if git diff --cached --quiet; then
             echo "No enrollment data change detected."
           else
             git commit -m "Update latest Okara enrollment"
-            git fetch origin main
-            git rebase origin/main
             for push_attempt in 1 2 3; do
               if git push origin HEAD:main; then
                 echo "Latest enrollment data pushed successfully."
-                break
+                exit 0
               fi
-              if [ "$push_attempt" -eq 3 ]; then
-                echo "Push failed after 3 attempts."
-                exit 1
-              fi
-              echo "Push conflict detected. Syncing with origin/main..."
+              echo "Push conflict detected on attempt ${push_attempt}. Refreshing remote..."
               git fetch origin main
-              git rebase origin/main
+              git reset --mixed origin/main
+              git add data/
+              if git diff --cached --quiet; then
+                echo "Remote already contains the latest data."
+                exit 0
+              fi
+              git commit -m "Update latest Okara enrollment"
               sleep 5
             done
+            echo "Push failed after 3 attempts."
+            exit 1
           fi
