@@ -510,6 +510,8 @@ def main():
         json_final.write_text(json.dumps(school_df.to_dict(orient="records"), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
         js_final = out_dir / "live-data.js"
         js_final.write_text("window.LIVE_DATA=" + json.dumps(school_df.to_dict(orient="records"), ensure_ascii=False, separators=(",", ":")) + ";", encoding="utf-8")
+        js_final = out_dir / "live-data.js"
+        js_final.write_text("window.LIVE_DATA=" + json.dumps(school_df.to_dict(orient="records"), ensure_ascii=False, separators=(",", ":")) + ";", encoding="utf-8")
         temp.unlink(missing_ok=True)
     except Exception:
         if temp.exists():
