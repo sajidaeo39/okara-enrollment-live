@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -92,5 +94,18 @@ jobs:
             git commit -m "Update latest Okara enrollment"
             git fetch origin main
             git rebase origin/main
-            git push origin HEAD:main
+            for push_attempt in 1 2 3; do
+              if git push origin HEAD:main; then
+                echo "Latest enrollment data pushed successfully."
+                break
+              fi
+              if [ "$push_attempt" -eq 3 ]; then
+                echo "Push failed after 3 attempts."
+                exit 1
+              fi
+              echo "Push conflict detected. Syncing with origin/main..."
+              git fetch origin main
+              git rebase origin/main
+              sleep 5
+            done
           fi
