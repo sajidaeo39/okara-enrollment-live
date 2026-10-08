@@ -3,6 +3,7 @@
 # Tehsil IDs: Depalpur=23, Okara=89, Renala Khurd=102
 
 import sys, subprocess, importlib, re, time, shutil
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -400,72 +401,39 @@ def main():
 
             print("    Schools:", len(schools))
 
-            for sid, emis, sname in schools:
-                # Completely exclude Cadet College Okara.
+            # Fetch school enrollment in parallel. Each worker uses its own SIS session
+            # because requests.Session is not thread-safe.
+            def fetch_one(item):
+                sid, emis, sname = item
                 if str(sid).strip() in EXCLUDED_SCHOOL_IDS or str(emis).strip() in EXCLUDED_EMIS:
-                    print("    Skipping excluded school:", sname)
-                    continue
-
+                    return ("skip", item, None, None)
                 w = wing(mname, sname, sid)
-
-                # One logical Secondary Wing per tehsil in the report.
                 report_markaz = "SECONDARY-WING" if w == "Secondary Wing" else mname
                 report_markaz_id = "SECONDARY-WING" if w == "Secondary Wing" else mid
-
-                schools_all.append([
-                    tname, tid, report_markaz, report_markaz_id,
-                    sname, sid, emis, w
-                ])
-
                 try:
-                    en, s = get_enrollment(
-                        s, tid, mid, sid
-                    )
-
-                    rows.append([
-                        started,
-                        tname,
-                        tid,
-                        report_markaz,
-                        report_markaz_id,
-                        sname,
-                        sid,
-                        emis,
-                        w,
-                        en["Male"],
-                        en["Female"],
-                        en["Other"],
-                        en["Total"],
-                        "OK",
-                    ])
-
+                    local_s = new_session()
+                    en, _ = get_enrollment(local_s, tid, mid, sid)
+                    return ("ok", item, (w, report_markaz, report_markaz_id), en)
                 except Exception as e:
-                    errors.append([
-                        "School",
-                        tname,
-                        mname,
-                        sname,
-                        str(e),
-                    ])
+                    return ("failed", item, (w, report_markaz, report_markaz_id), str(e))
 
-                    rows.append([
-                        started,
-                        tname,
-                        tid,
-                        mname,
-                        mid,
-                        sname,
-                        sid,
-                        emis,
-                        w,
-                        None,
-                        None,
-                        None,
-                        None,
-                        "FAILED",
-                    ])
-
-                    print("      FAILED:", sname[:55])
+            with ThreadPoolExecutor(max_workers=12) as pool:
+                futures = [pool.submit(fetch_one, item) for item in schools]
+                for idx, future in enumerate(as_completed(futures), 1):
+                    status, item, meta, result = future.result()
+                    sid, emis, sname = item
+                    if status == "skip":
+                        print("    Skipping excluded school:", sname)
+                        continue
+                    w, report_markaz, report_markaz_id = meta
+                    schools_all.append([tname, tid, report_markaz, report_markaz_id, sname, sid, emis, w])
+                    if status == "ok":
+                        rows.append([started, tname, tid, report_markaz, report_markaz_id, sname, sid, emis, w, result["Male"], result["Female"], result["Other"], result["Total"], "OK"])
+                    else:
+                        errors.append(["School", tname, mname, sname, result])
+                        rows.append([started, tname, tid, report_markaz, report_markaz_id, sname, sid, emis, w, None, None, None, None, "FAILED"])
+                        print("      FAILED:", sname[:55], "-", str(result)[:100])
+            print("    Parallel enrollment complete:", len(schools), "schools")
 
     school_columns = [
         "Run Date",
