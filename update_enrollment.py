@@ -2,7 +2,7 @@
 # Simple Windows version
 # Tehsil IDs: Depalpur=23, Okara=89, Renala Khurd=102
 
-import sys, subprocess, importlib, re, time, shutil
+import sys, subprocess, importlib, re, time, shutil, json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from datetime import datetime
@@ -485,6 +485,7 @@ def main():
     out_dir = Path(__file__).resolve().parent / "data"
     out_dir.mkdir(parents=True, exist_ok=True)
     final = out_dir / "Okara_Latest_Enrollment_Gender_Latest.xlsx"
+    json_final = out_dir / "Okara_Latest_Enrollment_Gender_Latest.json"
     archive = out_dir / f"Okara_Latest_Enrollment_Gender_{stamp}.xlsx"
     temp = out_dir / f"creating_{stamp}.xlsx"
 
@@ -504,6 +505,8 @@ def main():
 
         shutil.copy2(temp, archive)
         shutil.copy2(temp, final)
+        # Lightweight browser feed: avoids downloading/parsing XLSX in the dashboard.
+        json_final.write_text(json.dumps(school_df.to_dict(orient="records"), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
         temp.unlink(missing_ok=True)
     except Exception:
         if temp.exists():
