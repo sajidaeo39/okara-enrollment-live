@@ -441,7 +441,7 @@ async function loadLiveData(){
    const buf=await resp.arrayBuffer();
    if(!buf || buf.byteLength<1000) throw new Error('Latest workbook is empty.');
    await loadWorkbookBuffer(buf,'Okara_Latest_Enrollment_Gender_Latest.xlsx');
-   status.textContent='LIVE • Latest SIS report: '+(reportDateTime||reportDate);
+   const st=document.getElementById('status'); if(st) st.textContent='LIVE • Latest SIS report: '+(reportDateTime||reportDate);
    document.getElementById('headerLatest').textContent='Latest SIS report: '+(reportDateTime||reportDate);
  }catch(err){
    console.error('Live SIS load failed:',err);
