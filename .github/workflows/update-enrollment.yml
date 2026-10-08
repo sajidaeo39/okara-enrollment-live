@@ -92,7 +92,8 @@ jobs:
           s = p.read_text(encoding="utf-8")
           stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
           import re
-          s, n = re.subn(r'data/live-data\\.js\\?v=[^"\\']+', f'data/live-data.js?v={stamp}', s)
+          import re
+          s, n = re.subn(r"data/live-data\\.js\\?v=[^\"']+", f"data/live-data.js?v={stamp}", s)
           if n == 0:
               s = s.replace('data/live-data.js', f'data/live-data.js?v={stamp}', 1)
           p.write_text(s, encoding="utf-8")
