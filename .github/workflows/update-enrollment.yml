@@ -90,5 +90,7 @@ jobs:
             echo "No enrollment data change detected."
           else
             git commit -m "Update latest Okara enrollment"
-            git push
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
           fi
