@@ -414,7 +414,7 @@ function exportPDF(){
 async function loadLiveData(){
  window.__dashboardBoot.loading=false;
  try{
-  const response=await fetch('data/Okara_Latest_Enrollment_Gender_Latest.json?ts='+Date.now(),{cache:'no-store'});
+  const response=await fetch('https://raw.githubusercontent.com/sajidaeo39/okara-enrollment-live/main/data/Okara_Latest_Enrollment_Gender_Latest.json?ts='+Date.now(),{cache:'no-store'});
   if(!response.ok) throw new Error('Latest SIS JSON HTTP '+response.status);
   const raw=await response.json();
   if(!Array.isArray(raw)||raw.length<1000) throw new Error('Live data incomplete: '+(raw.length||0)+' schools');
