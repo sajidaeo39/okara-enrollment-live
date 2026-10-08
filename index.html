@@ -420,9 +420,9 @@ function exportPDF(){
 }
 async function loadLiveData(){
  window.__dashboardBoot.loading=true;
- const latest='https://raw.githubusercontent.com/sajidaeo39/okara-enrollment-live/main/data/Okara_Live_Combined.json';
+ const latest='data/Okara_Live_Combined.json';
  try{
-  const resp=await fetch(latest+'?v='+Date.now(),{cache:'no-store'});
+  const resp=await fetch(latest+'?v='+Date.now(),{cache:'no-store',credentials:'same-origin'});
   if(!resp.ok) throw new Error('Live data HTTP '+resp.status);
   const raw=await resp.json();
   if(!Array.isArray(raw)||raw.length<1000) throw new Error('Live data incomplete: '+(raw.length||0)+' schools');
